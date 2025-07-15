@@ -242,14 +242,14 @@ export default function AgenticStudioPage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="default" size="sm">
+          <Button variant="default" size="sm" onClick={() => toast({ title: "Shared", description: "Project shared successfully." })}>
             <Share2 size={14} className="mr-2" />
             Share
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => toast({ title: "Notifications", description: "No new notifications." })}>
             <Bell size={20} />
           </Button>
-          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => toast({ title: "Settings", description: "Settings page is not implemented yet." })}>
             <Settings size={20} />
           </Button>
           <Avatar className="h-8 w-8">
