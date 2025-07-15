@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useCallback } from 'react';
@@ -230,76 +231,79 @@ export default function AgenticStudioPage() {
   }, [runAgentWorkflow]);
 
   return (
-    <div className="bg-[#111827] text-white h-screen flex flex-col font-sans">
-      <header className="flex items-center justify-between h-14 px-4 border-b border-gray-700 flex-shrink-0">
+    <div className="bg-background text-foreground h-screen flex flex-col font-sans">
+      <header className="flex items-center justify-between h-14 px-4 border-b border-border flex-shrink-0 bg-card">
         <div className="flex items-center space-x-4">
-          <Bot size={24} className="text-blue-400" />
+          <Bot size={24} className="text-primary" />
           <h1 className="text-lg font-grotesk font-bold">Agentic Studio</h1>
-          <div className="flex items-center bg-gray-700/50 px-3 py-1 rounded-md text-sm">
+          <div className="flex items-center bg-muted px-3 py-1 rounded-md text-sm">
             <GitBranch size={14} className="mr-2" />
             <span>main</span>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90">
+        <div className="flex items-center space-x-2">
+          <Button variant="default" size="sm">
             <Share2 size={14} className="mr-2" />
             Share
           </Button>
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
             <Bell size={20} />
           </Button>
-          <Button variant="ghost" size="icon" className="text-gray-400 hover:text-white">
+          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
             <Settings size={20} />
           </Button>
-          <Avatar>
-            <AvatarFallback className="bg-indigo-500 text-white font-bold text-sm">P</AvatarFallback>
+          <Avatar className="h-8 w-8">
+            <AvatarFallback className="bg-primary text-primary-foreground font-bold text-sm">U</AvatarFallback>
           </Avatar>
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <div className="w-1/5 min-w-[280px] bg-gray-800/50 border-r border-gray-700 flex flex-col">
-          <div className="p-4 border-b border-gray-700">
+      <main className="flex flex-1 overflow-hidden">
+        {/* Left Panel: Navigation & Agent Overview */}
+        <div className="w-1/5 min-w-[280px] bg-card border-r border-border flex flex-col">
+          <div className="p-4 border-b border-border">
             <h2 className="text-md font-grotesk font-semibold">Explorer</h2>
           </div>
           <div className="flex-1 overflow-y-auto py-2">
             <FileTree node={fileStructure} />
           </div>
-          <div className="border-t border-gray-700 flex-shrink-0">
+          <div className="border-t border-border flex-shrink-0">
             <AgentStatus agents={agents} />
           </div>
         </div>
 
-        <div className="w-2/5 flex flex-col border-r border-gray-700">
-          <div className="flex-shrink-0 border-b border-gray-700">
+        {/* Center Panel: Dynamic Workspace */}
+        <div className="w-2/5 flex flex-col border-r border-border">
+          <div className="flex-shrink-0 border-b border-border bg-card">
             <div className="flex space-x-1 p-2">
-              <button onClick={() => setCenterView('chat')} className={`flex items-center px-4 py-2 text-sm rounded-md ${centerView === 'chat' ? 'bg-gray-700' : 'hover:bg-gray-700/50 text-gray-300'}`}>
+              <Button variant={centerView === 'chat' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('chat')}>
                 <Bot size={16} className="mr-2" /> Chat
-              </button>
-              <button onClick={() => setCenterView('code')} className={`flex items-center px-4 py-2 text-sm rounded-md ${centerView === 'code' ? 'bg-gray-700' : 'hover:bg-gray-700/50 text-gray-300'}`}>
+              </Button>
+              <Button variant={centerView === 'code' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('code')}>
                 <Code size={16} className="mr-2" /> Code
-              </button>
-              <button onClick={() => setCenterView('canvas')} className={`flex items-center px-4 py-2 text-sm rounded-md ${centerView === 'canvas' ? 'bg-gray-700' : 'hover:bg-gray-700/50 text-gray-300'}`}>
+              </Button>
+              <Button variant={centerView === 'canvas' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('canvas')}>
                 <LayoutTemplate size={16} className="mr-2" /> Canvas
-              </button>
+              </Button>
             </div>
           </div>
-          <div className="flex-1 overflow-hidden bg-gray-800/50">
+          <div className="flex-1 overflow-hidden bg-background">
             {centerView === 'chat' && <ChatView messages={messages} onSendMessage={handleSendMessage} />}
             {centerView === 'code' && <CodeEditorView content={codeContent[activeCodeFile] || 'Select a file to view its code.'} />}
             {centerView === 'canvas' && <CanvasView />}
           </div>
         </div>
 
-        <div className="w-2/5 flex flex-col bg-gray-800/30">
-          <div className="flex-shrink-0 border-b border-gray-700">
+        {/* Right Panel: Immediate Feedback */}
+        <div className="w-2/5 flex flex-col bg-muted/30">
+          <div className="flex-shrink-0 border-b border-border bg-card">
             <div className="flex space-x-1 p-2">
-              <button onClick={() => setRightView('preview')} className={`flex items-center px-4 py-2 text-sm rounded-md ${rightView === 'preview' ? 'bg-gray-700' : 'hover:bg-gray-700/50 text-gray-300'}`}>
-                <Play size={16} className="mr-2" /> Live Preview
-              </button>
-              <button onClick={() => setRightView('logs')} className={`flex items-center px-4 py-2 text-sm rounded-md ${rightView === 'logs' ? 'bg-gray-700' : 'hover:bg-gray-700/50 text-gray-300'}`}>
+              <Button variant={rightView === 'preview' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('preview')}>
+                 <Play size={16} className="mr-2" /> Live Preview
+              </Button>
+              <Button variant={rightView === 'logs' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('logs')}>
                 <Terminal size={16} className="mr-2" /> Logs
-              </button>
+              </Button>
             </div>
           </div>
           <div className="flex-1 overflow-hidden p-4">
@@ -307,7 +311,7 @@ export default function AgenticStudioPage() {
             {rightView === 'logs' && <LogsView logs={logs} />}
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

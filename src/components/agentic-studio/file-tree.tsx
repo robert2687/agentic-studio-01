@@ -1,7 +1,8 @@
+
 "use client";
 
 import React, { useState } from 'react';
-import { Folder, File, ChevronRight, ChevronDown } from 'lucide-react';
+import { Folder, File, ChevronRight, ChevronDown, LoaderCircle } from 'lucide-react';
 
 export type FileNode = {
   name: string;
@@ -31,15 +32,16 @@ export const FileTree: React.FC<FileTreeProps> = ({ node, level = 0 }) => {
   return (
     <div>
       <div
-        className={`flex items-center py-1.5 px-2 rounded-md cursor-pointer hover:bg-gray-700/50 ${node.status === 'generating' ? 'text-yellow-400 animate-pulse' : 'text-gray-300'}`}
+        className={`flex items-center py-1.5 px-2 rounded-md cursor-pointer hover:bg-muted text-foreground`}
         style={{ paddingLeft: `${level * 16 + 4}px` }}
         onClick={toggleOpen}
       >
         <div className="w-4 mr-2 flex-shrink-0">
           {isFolder && <ChevronIcon size={16} />}
         </div>
-        <Icon size={16} className="mr-2 flex-shrink-0" />
-        <span className="truncate text-sm">{node.name}</span>
+        <Icon size={16} className={`mr-2 flex-shrink-0 ${node.status === 'done' ? 'text-green-500' : 'text-muted-foreground'}`} />
+        <span className="truncate text-sm flex-1">{node.name}</span>
+        {node.status === 'generating' && <LoaderCircle size={14} className="animate-spin text-yellow-500" />}
       </div>
       {isFolder && isOpen && node.children && (
         <div>
@@ -51,3 +53,5 @@ export const FileTree: React.FC<FileTreeProps> = ({ node, level = 0 }) => {
     </div>
   );
 };
+
+    
