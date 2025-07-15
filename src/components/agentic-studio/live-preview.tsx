@@ -12,20 +12,20 @@ export const LivePreview = () => (
             <div className="flex items-center justify-center h-full bg-gray-100">
                 <Card className="w-full max-w-md p-2 border">
                     <CardHeader>
-                        <CardTitle className="text-2xl font-bold text-center text-gray-800 font-grotesk">Prihlásenie</CardTitle>
+                        <CardTitle className="text-2xl font-bold text-center text-gray-800 font-grotesk">Login</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <form className="space-y-6">
                         <div className="space-y-1">
                             <Label htmlFor="email-preview" className="text-sm font-medium text-gray-700">Email</Label>
-                            <Input id="email-preview" type="email" className="text-gray-900" placeholder="vas@email.com"/>
+                            <Input id="email-preview" type="email" className="text-gray-900" placeholder="your@email.com"/>
                         </div>
                         <div className="space-y-1">
-                            <Label htmlFor="password-preview" className="text-sm font-medium text-gray-700">Heslo</Label>
+                            <Label htmlFor="password-preview" className="text-sm font-medium text-gray-700">Password</Label>
                             <Input id="password-preview" type="password" className="text-gray-900" />
                         </div>
                         <Button type="button" className="w-full bg-indigo-600 hover:bg-indigo-700" onClick={(e) => e.preventDefault()}>
-                            Prihlásiť sa
+                            Log In
                         </Button>
                       </form>
                     </CardContent>

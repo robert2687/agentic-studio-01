@@ -8,7 +8,7 @@ export const CanvasView = () => (
         <div className="text-center">
             <LayoutTemplate size={64} className="mx-auto mb-4 text-gray-500"/>
             <h3 className="text-xl font-grotesk font-semibold">Gemini Canvas</h3>
-            <p>Miesto pre vizuálne prototypovanie a kolaboráciu s UI/UX Agentom.</p>
+            <p>A space for visual prototyping and collaboration with the UI/UX Agent.</p>
         </div>
     </div>
 );

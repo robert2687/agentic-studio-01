@@ -68,7 +68,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages, onSendMessage }) =
                         value={input}
                         onChange={(e) => setInput(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                        placeholder="Zadajte pokyn pre orchestrátora... (napr. 'Vytvor prihlasovaciu stránku')"
+                        placeholder="Enter an instruction for the orchestrator... (e.g., 'Create a login page')"
                         className="w-full bg-gray-700 text-gray-200 placeholder-gray-400 rounded-lg py-3 pl-4 pr-12 focus:outline-none focus:ring-2 focus:ring-primary"
                     />
                     <button onClick={handleSend} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-primary hover:bg-primary/90 text-white transition-colors">
