@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:system": "node test/system.test.js"
   },
   "dependencies": {
     "@codesandbox/sandpack-react": "^2.13.1",
