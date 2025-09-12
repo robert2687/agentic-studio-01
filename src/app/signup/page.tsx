@@ -1,4 +1,3 @@
-
 "use client";
 
 import Image from "next/image";
@@ -20,16 +19,15 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { signInWithEmail, signInWithGoogle } from "@/lib/auth";
+import { signUpWithEmail } from "@/lib/auth";
 import { useRouter } from "next/navigation";
-
 
 const formSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email." }),
-  password: z.string().min(1, { message: "Password is required." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
-export default function LoginPage() {
+export default function SignupPage() {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -44,7 +42,7 @@ export default function LoginPage() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    const { result, error } = await signInWithEmail(values.email, values.password);
+    const { result, error } = await signUpWithEmail(values.email, values.password);
     setIsLoading(false);
 
     if (error) {
@@ -56,51 +54,21 @@ export default function LoginPage() {
     } else {
       toast({
         title: "Success",
-        description: "Logged in successfully!",
+        description: "Account created successfully! Please log in.",
       });
-      router.push("/");
-    }
-  }
-
-  async function handleGoogleSignIn() {
-    setIsLoading(true);
-    const { result, error } = await signInWithGoogle();
-    setIsLoading(false);
-
-    if (error) {
-      toast({
-        title: "Error",
-        description: (error as Error).message,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Logged in successfully!",
-      });
-      router.push("/");
+      router.push("/login");
     }
   }
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
-      <div className="hidden bg-muted lg:block">
-        <Image
-          src="https://picsum.photos/seed/1/1920/1080"
-          alt="Image"
-          width="1920"
-          height="1080"
-          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
-          data-ai-hint="technology abstract"
-        />
-      </div>
-      <div className="flex items-center justify-center py-12">
+       <div className="flex items-center justify-center py-12">
         <div className="mx-auto grid w-[350px] gap-6">
           <div className="grid gap-2 text-center">
             <Bot size={48} className="mx-auto text-primary" />
-            <h1 className="text-3xl font-bold">Welcome to Agentic Studio</h1>
+            <h1 className="text-3xl font-bold">Create an Account</h1>
             <p className="text-balance text-muted-foreground">
-              Enter your credentials to access your agentic workspace.
+              Enter your details to start building with your AI team.
             </p>
           </div>
           <Form {...form}>
@@ -137,21 +105,27 @@ export default function LoginPage() {
               />
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login
-              </Button>
-              <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isLoading}>
-                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Login with Google
+                Sign Up
               </Button>
             </form>
           </Form>
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="underline">
-              Sign up
+            Already have an account?{" "}
+            <Link href="/login" className="underline">
+              Login
             </Link>
           </div>
         </div>
+      </div>
+      <div className="hidden bg-muted lg:block">
+        <Image
+          src="https://picsum.photos/seed/2/1920/1080"
+          alt="Image"
+          width="1920"
+          height="1080"
+          className="h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
+          data-ai-hint="technology code"
+        />
       </div>
     </div>
   );
