@@ -49,7 +49,8 @@ const prompt = ai.definePrompt({
   2.  Create a file structure for a simple React app that fulfills the prompt. It must include \`package.json\`, a root file like \`src/App.jsx\`, and an entry point like \`src/index.js\`.
   3.  **CRITICAL**: The \`package.json\` file MUST include \`react\`, \`react-dom\`, and \`react-scripts\` as dependencies. This is required for the application to run. Use recent but stable versions.
   4.  Generate the code for each file. The code should be simple, functional, and directly related to the user's prompt.
-  5.  **VERY IMPORTANT**: You will return a single JSON object containing two fields: \`fileStructure\` and \`codeFiles\`.
+  5.  **DO NOT** use any third-party libraries other than \`react\` and \`react-dom\`. The Sandpack environment does not support installing other packages. All code must be self-contained.
+  6.  **VERY IMPORTANT**: You will return a single JSON object containing two fields: \`fileStructure\` and \`codeFiles\`.
       - \`fileStructure\`: A JSON object representing the file tree.
       - \`codeFiles\`: An array of objects. Each object must have a \`path\` and a \`content\` property.
 
@@ -77,7 +78,7 @@ const prompt = ai.definePrompt({
   [
     {
       "path": "/package.json",
-      "content": "{\\n  \\"name\\": \\"react-app\\",\\n  \\"dependencies\\": {\\n    \\"react\\": \\"18.2.0\\",\\n    \\"react-dom\\": \\"18.2.0\\",\\n    \\"react-scripts\\": \\"5.0.1\\"\\n  }\\n}"
+      "content": "{\\"name\\": \\"react-app\\",\\"dependencies\\": {\\"react\\": \\"18.2.0\\",\\"react-dom\\": \\"18.2.0\\",\\"react-scripts\\": \\"5.0.1\\"}}"
     },
     {
       "path": "/src/App.jsx",
