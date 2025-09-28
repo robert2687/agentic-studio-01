@@ -3,6 +3,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, Upload, Download, ArrowUp, Send, Bell, Settings, Save } from 'lucide-react';
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AgentStatus, type Agent } from '@/components/agentic-studio/agent-status';
@@ -250,58 +251,64 @@ export default function AgenticStudioPage() {
       </header>
 
       <main className="flex flex-1 overflow-hidden">
-        {/* Left Panel: Navigation & Agent Overview */}
-        <div className="w-1/5 min-w-[280px] bg-card border-r border-border flex flex-col">
-          <div className="p-4 border-b border-border">
-            <h2 className="text-md font-grotesk font-semibold">Explorer</h2>
-          </div>
-          <div className="flex-1 overflow-y-auto py-2">
-            <FileTree node={fileStructure} />
-          </div>
-          <div className="border-t border-border flex-shrink-0">
-            <AgentStatus agents={agents} />
-          </div>
-        </div>
-
-        {/* Center Panel: Dynamic Workspace */}
-        <div className="w-2/5 flex flex-col border-r border-border">
-          <div className="flex-shrink-0 border-b border-border bg-card">
-            <div className="flex space-x-1 p-2">
-              <Button variant={centerView === 'chat' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('chat')}>
-                <Bot size={16} className="mr-2" /> Chat
-              </Button>
-              <Button variant={centerView === 'code' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('code')}>
-                <Code size={16} className="mr-2" /> Code
-              </Button>
-              <Button variant={centerView === 'canvas' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('canvas')}>
-                <LayoutTemplate size={16} className="mr-2" /> Canvas
-              </Button>
+        <PanelGroup direction="horizontal">
+          {/* Left Panel: Navigation & Agent Overview */}
+          <Panel defaultSize={20} minSize={15} className="min-w-[280px] bg-card border-r border-border flex flex-col">
+            <div className="p-4 border-b border-border">
+              <h2 className="text-md font-grotesk font-semibold">Explorer</h2>
             </div>
-          </div>
-          <div className="flex-1 overflow-hidden bg-background">
-            {centerView === 'chat' && <ChatView messages={messages} onSendMessage={handleSendMessage} />}
-            {centerView === 'code' && <CodeEditorView content={code} onContentChange={handleCodeChange} />}
-            {centerView === 'canvas' && <CanvasView />}
-          </div>
-        </div>
-
-        {/* Right Panel: Immediate Feedback */}
-        <div className="w-2/5 flex flex-col bg-muted/30">
-          <div className="flex-shrink-0 border-b border-border bg-card">
-            <div className="flex space-x-1 p-2">
-              <Button variant={rightView === 'preview' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('preview')}>
-                 <Play size={16} className="mr-2" /> Live Preview
-              </Button>
-              <Button variant={rightView === 'logs' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('logs')}>
-                <Terminal size={16} className="mr-2" /> Logs
-              </Button>
+            <div className="flex-1 overflow-y-auto py-2">
+              <FileTree node={fileStructure} />
             </div>
-          </div>
-          <div className="flex-1 overflow-hidden p-4">
-            {rightView === 'preview' && <SandpackPreview code={code} />}
-            {rightView === 'logs' && <LogsView logs={logs} />}
-          </div>
-        </div>
+            <div className="border-t border-border flex-shrink-0">
+              <AgentStatus agents={agents} />
+            </div>
+          </Panel>
+          
+          <PanelResizeHandle className="w-1 bg-border/50 hover:bg-primary/50 transition-colors" />
+
+          {/* Center Panel: Dynamic Workspace */}
+          <Panel defaultSize={40} minSize={30} className="flex flex-col border-r border-border">
+            <div className="flex-shrink-0 border-b border-border bg-card">
+              <div className="flex space-x-1 p-2">
+                <Button variant={centerView === 'chat' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('chat')}>
+                  <Bot size={16} className="mr-2" /> Chat
+                </Button>
+                <Button variant={centerView === 'code' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('code')}>
+                  <Code size={16} className="mr-2" /> Code
+                </Button>
+                <Button variant={centerView === 'canvas' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('canvas')}>
+                  <LayoutTemplate size={16} className="mr-2" /> Canvas
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden bg-background">
+              {centerView === 'chat' && <ChatView messages={messages} onSendMessage={handleSendMessage} />}
+              {centerView === 'code' && <CodeEditorView content={code} onContentChange={handleCodeChange} />}
+              {centerView === 'canvas' && <CanvasView />}
+            </div>
+          </Panel>
+
+          <PanelResizeHandle className="w-1 bg-border/50 hover:bg-primary/50 transition-colors" />
+
+          {/* Right Panel: Immediate Feedback */}
+          <Panel defaultSize={40} minSize={30} className="flex flex-col bg-muted/30">
+            <div className="flex-shrink-0 border-b border-border bg-card">
+              <div className="flex space-x-1 p-2">
+                <Button variant={rightView === 'preview' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('preview')}>
+                   <Play size={16} className="mr-2" /> Live Preview
+                </Button>
+                <Button variant={rightView === 'logs' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('logs')}>
+                  <Terminal size={16} className="mr-2" /> Logs
+                </Button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-hidden p-4">
+              {rightView === 'preview' && <SandpackPreview code={code} />}
+              {rightView === 'logs' && <LogsView logs={logs} />}
+            </div>
+          </Panel>
+        </PanelGroup>
       </main>
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </div>
