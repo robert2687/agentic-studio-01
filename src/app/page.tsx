@@ -21,16 +21,18 @@ import { generateInitialApp } from '@/ai/flows/generate-initial-app-from-prompt'
 const initialFileStructure: FileNode = {
   name: 'my-app',
   type: 'folder',
+  path: '/',
   children: [
     {
       name: 'src',
       type: 'folder',
+      path: '/src',
       children: [
-        { name: 'App.jsx', type: 'file' },
-        { name: 'index.css', type: 'file' },
+        { name: 'App.jsx', type: 'file', path: '/src/App.jsx' },
+        { name: 'index.css', type: 'file', path: '/src/index.css' },
       ],
     },
-    { name: 'package.json', type: 'file' },
+    { name: 'package.json', type: 'file', path: '/package.json' },
   ],
 };
 
@@ -67,15 +69,15 @@ export default function AgenticStudioPage() {
     { sender: 'ai', text: 'Welcome to **Synapse IDE**! I am your AI project manager. Tell me what you would like to build.' }
   ]);
   const [logs, setLogs] = useState<Log[]>([]);
-  const [activeCodeFile, setActiveCodeFile] = useState('src/App.jsx');
+  const [activeCodeFile, setActiveCodeFile] = useState('/src/App.jsx');
   
   const [code, setCode] = useState(initialCode);
   const { isSaving } = useAutoSave(code, EDITOR_STORAGE_KEY);
 
   const [codeFiles, setCodeFiles] = useState<{ [key: string]: string }>({
-    'src/App.jsx': initialCode,
-    'src/index.css': '/* CSS content */',
-    'package.json': '{ "name": "my-app" }',
+    '/src/App.jsx': initialCode,
+    '/src/index.css': '/* CSS content */',
+    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "react-scripts": "5.0.1" } }',
   });
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -129,10 +131,14 @@ export default function AgenticStudioPage() {
                   const newFileStructure = result.fileStructure;
                   const newCodeFiles = result.codeFiles;
 
+                  if (!newFileStructure || !newCodeFiles) {
+                    throw new Error("AI failed to generate file structure or code files.");
+                  }
+
                   setFileStructure(newFileStructure);
                   setCodeFiles(newCodeFiles);
                   
-                  const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App') || name.includes('index') || name.includes('page')) || 'src/App.jsx';
+                  const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App') || name.includes('index') || name.includes('page')) || '/src/App.jsx';
                   setCode(newCodeFiles[mainFile] || initialCode);
                   setActiveCodeFile(mainFile);
 
@@ -147,7 +153,7 @@ export default function AgenticStudioPage() {
                   });
                 } catch (error) {
                   console.error("Error generating app:", error);
-                  setMessages(prev => [...prev, { sender: 'ai', text: 'An error occurred while building the application. Please check the logs.' }]);
+                  setMessages(prev => [...prev, { sender: 'ai', text: `An error occurred while building the application: ${(error as Error).message}` }]);
                   setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `Error during generation: ${(error as Error).message}` }]);
                 }
             });
