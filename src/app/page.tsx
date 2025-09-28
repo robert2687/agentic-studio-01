@@ -252,7 +252,7 @@ export default function AgenticStudioPage() {
             </div>
             <div className="flex-1 overflow-hidden bg-background">
               {centerView === 'chat' && <ChatView messages={messages} onSendMessage={handleSendMessage} />}
-              {centerView === 'code' && <CodeEditorView content={code} onContentChange={handleCodeChange} />}
+              {centerView === 'code' && <CodeEditorView files={codeFiles} activeFile={activeCodeFile} onCodeChange={handleCodeChange} />}
               {centerView === 'canvas' && <CanvasView />}
             </div>
           </Panel>
@@ -282,7 +282,3 @@ export default function AgenticStudioPage() {
     </div>
   );
 }
-
-    
-
-    

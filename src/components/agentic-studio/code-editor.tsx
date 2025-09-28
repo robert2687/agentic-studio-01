@@ -2,21 +2,41 @@
 "use client";
 
 import React from 'react';
+import { Sandpack } from "@codesandbox/sandpack-react";
 
 interface CodeEditorViewProps {
-    content: string;
-    onContentChange: (newContent: string) => void;
+    files: { [key: string]: string };
+    activeFile: string;
+    onCodeChange: (newCode: string) => void;
 }
 
-export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ content, onContentChange }) => (
-    <div className="h-full bg-[#1e293b] p-4 overflow-auto font-mono text-sm rounded-lg m-2 border border-border">
-        <textarea
-            value={content}
-            onChange={(e) => onContentChange(e.target.value)}
-            className="w-full h-full bg-transparent text-gray-300 resize-none focus:outline-none"
-            spellCheck="false"
-        />
-    </div>
-);
-
+export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFile, onCodeChange }) => {
     
+    const sandpackFiles = Object.entries(files).reduce((acc, [path, code]) => {
+        const sandpackPath = path.startsWith('/') ? path : `/${path}`;
+        acc[sandpackPath] = code;
+        return acc;
+    }, {} as { [key: string]: string });
+
+    return (
+        <div className="h-full w-full bg-card">
+            <Sandpack
+                template="react"
+                files={sandpackFiles}
+                options={{
+                    activeFile: activeFile.startsWith('/') ? activeFile : `/${activeFile}`,
+                    showLineNumbers: true,
+                    showInlineErrors: true,
+                    showNavigator: false,
+                    showTabs: false,
+                    showConsole: false,
+                    showConsoleButton: false,
+                    editorHeight: 'calc(100vh - 100px)',
+                    readOnly: false,
+                }}
+                theme="dark"
+                onCodeUpdate={(newCode) => onCodeChange(newCode)}
+            />
+        </div>
+    );
+};
