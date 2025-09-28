@@ -126,8 +126,8 @@ export default function AgenticStudioPage() {
                 setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Frontend Coder", message: "Generating file structure and code..." }]);
                 try {
                   const result = await generateInitialApp({ prompt });
-                  const newFileStructure = JSON.parse(result.fileStructure);
-                  const newCodeFiles = JSON.parse(result.codeFiles);
+                  const newFileStructure = result.fileStructure;
+                  const newCodeFiles = result.codeFiles;
 
                   setFileStructure(newFileStructure);
                   setCodeFiles(newCodeFiles);

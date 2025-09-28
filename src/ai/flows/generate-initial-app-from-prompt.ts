@@ -18,8 +18,8 @@ const GenerateInitialAppInputSchema = z.object({
 export type GenerateInitialAppInput = z.infer<typeof GenerateInitialAppInputSchema>;
 
 const GenerateInitialAppOutputSchema = z.object({
-  fileStructure: z.string().describe('The generated file structure as a JSON string. Each file should have a `path` property.'),
-  codeFiles: z.string().describe('The generated code files as a JSON string, where keys are file paths and values are file contents.'),
+  fileStructure: z.any().describe('The generated file structure as a JSON object. Each file should have a `path` property.'),
+  codeFiles: z.any().describe('The generated code files as a JSON object, where keys are file paths and values are file contents.'),
 });
 export type GenerateInitialAppOutput = z.infer<typeof GenerateInitialAppOutputSchema>;
 
@@ -38,12 +38,12 @@ const prompt = ai.definePrompt({
   2.  Create a file structure for a simple React app that fulfills the prompt. It must include \`package.json\`, a root file like \`src/App.jsx\`, and an entry point like \`src/index.js\`.
   3.  The \`package.json\` must include \`react\`, \`react-dom\`, and \`react-scripts\` as dependencies. Use recent but stable versions.
   4.  Generate the code for each file. The code should be simple, functional, and directly related to the user's prompt.
-  5.  **VERY IMPORTANT**: You will return two fields, \`fileStructure\` and \`codeFiles\`.
-      - \`fileStructure\`: This must be a JSON **string** representing the file tree.
-      - \`codeFiles\`: This must be a JSON **string**. The keys of this JSON object are the file paths (e.g., "src/App.jsx"), and the values are the complete, raw code for each file as a string. Do NOT escape the code content. It should be a direct representation of the file's content.
+  5.  **VERY IMPORTANT**: You will return two fields in a single JSON object: \`fileStructure\` and \`codeFiles\`.
+      - \`fileStructure\`: This must be a JSON object representing the file tree.
+      - \`codeFiles\`: This must be a JSON object. The keys of this object are the file paths (e.g., "/src/App.jsx"), and the values are the complete, raw code for each file as a string.
 
-  Example \`fileStructure\` JSON string:
-  '{
+  Example \`fileStructure\` JSON object:
+  {
     "name": "my-app",
     "type": "folder",
     "path": "/",
@@ -60,15 +60,15 @@ const prompt = ai.definePrompt({
       },
       { "name": "package.json", "type": "file", "path": "/package.json" }
     ]
-  }'
+  }
 
-  Example \`codeFiles\` JSON string:
-  '{
+  Example \`codeFiles\` JSON object:
+  {
     "/package.json": "{\\n  \\"name\\": \\"react-app\\",\\n  \\"dependencies\\": {\\n    \\"react\\": \\"18.2.0\\",\\n    \\"react-dom\\": \\"18.2.0\\",\\n    \\"react-scripts\\": \\"5.0.1\\"\\n  }\\n}",
-    "/src/App.jsx": "import React from \\'react\\';\\nimport \\'./styles.css\\';\\n\\nexport default function App() {\\n  return <h1>Hello from my App!</h1>;\\n}",
-    "/src/index.js": "import React from \\'react\\';\\nimport { createRoot } from \\'react-dom/client\\';\\nimport App from \\'./App\\';\\n\\nconst root = createRoot(document.getElementById(\\'root\\'));\\nroot.render(<App />);",
+    "/src/App.jsx": "import React from 'react';\\nimport './styles.css';\\n\\nexport default function App() {\\n  return <h1>Hello from my App!</h1>;\\n}",
+    "/src/index.js": "import React from 'react';\\nimport { createRoot } from 'react-dom/client';\\nimport App from './App';\\n\\nconst root = createRoot(document.getElementById('root'));\\nroot.render(<App />);",
     "/src/styles.css": "body { font-family: sans-serif; }"
-  }'
+  }
 
   User Prompt: {{{prompt}}}
 `,
