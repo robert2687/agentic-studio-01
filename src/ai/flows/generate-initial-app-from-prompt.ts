@@ -36,11 +36,11 @@ const prompt = ai.definePrompt({
   Instructions:
   1.  Analyze the user's prompt to determine the application's requirements.
   2.  Create a file structure for a simple React app that fulfills the prompt. It must include \`package.json\`, a root file like \`src/App.jsx\`, and an entry point like \`src/index.js\`.
-  3.  The \`package.json\` must include \`react\`, \`react-dom\`, and \`react-scripts\` as dependencies. Use recent but stable versions.
+  3.  **CRITICAL**: The \`package.json\` file MUST include \`react\`, \`react-dom\`, and \`react-scripts\` as dependencies. This is required for the application to run. Use recent but stable versions.
   4.  Generate the code for each file. The code should be simple, functional, and directly related to the user's prompt.
-  5.  **VERY IMPORTANT**: You will return two fields in a single JSON object: \`fileStructure\` and \`codeFiles\`.
-      - \`fileStructure\`: This must be a JSON object representing the file tree.
-      - \`codeFiles\`: This must be a JSON object. The keys of this object are the file paths (e.g., "/src/App.jsx"), and the values are the complete, raw code for each file as a string.
+  5.  **VERY IMPORTANT**: You will return a single JSON object containing two fields: \`fileStructure\` and \`codeFiles\`.
+      - \`fileStructure\`: A JSON object representing the file tree.
+      - \`codeFiles\`: A JSON object where keys are file paths (e.g., "/src/App.jsx") and values are the complete, raw code for each file as a string.
 
   Example \`fileStructure\` JSON object:
   {
