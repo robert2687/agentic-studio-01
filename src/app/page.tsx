@@ -129,14 +129,19 @@ export default function AgenticStudioPage() {
                 try {
                   const result = await generateInitialApp({ prompt });
                   const newFileStructure = result.fileStructure;
-                  const newCodeFiles = result.codeFiles;
+                  const newCodeFilesArray = result.codeFiles;
 
-                  if (!newFileStructure || !newCodeFiles) {
+                  if (!newFileStructure || !newCodeFilesArray) {
                     console.error("AI failed to generate file structure or code files.", result);
                     setMessages(prev => [...prev, { sender: 'ai', text: "Sorry, an error occurred while building the application. The AI agents failed to generate the necessary files." }]);
                     setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Error: AI generation failed. Missing file structure or code files." }]);
                     return;
                   }
+
+                  const newCodeFiles = newCodeFilesArray.reduce((acc, file) => {
+                    acc[file.path] = file.content;
+                    return acc;
+                  }, {} as { [key: string]: string });
 
                   setFileStructure(newFileStructure);
                   setCodeFiles(newCodeFiles);

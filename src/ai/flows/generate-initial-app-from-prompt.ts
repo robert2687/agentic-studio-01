@@ -27,7 +27,10 @@ const FileNodeSchema: z.ZodType<any> = z.lazy(() => z.object({
 
 const GenerateInitialAppOutputSchema = z.object({
   fileStructure: FileNodeSchema.describe('The generated file structure as a JSON object. Each file should have a `path` property.'),
-  codeFiles: z.record(z.string()).describe('A JSON object where keys are file paths and values are the complete, raw code for each file as a string.'),
+  codeFiles: z.array(z.object({
+    path: z.string().describe('The full path of the file.'),
+    content: z.string().describe('The complete, raw code for the file as a string.'),
+  })).describe('An array of objects, where each object represents a file with its path and content.'),
 });
 export type GenerateInitialAppOutput = z.infer<typeof GenerateInitialAppOutputSchema>;
 
@@ -48,7 +51,7 @@ const prompt = ai.definePrompt({
   4.  Generate the code for each file. The code should be simple, functional, and directly related to the user's prompt.
   5.  **VERY IMPORTANT**: You will return a single JSON object containing two fields: \`fileStructure\` and \`codeFiles\`.
       - \`fileStructure\`: A JSON object representing the file tree.
-      - \`codeFiles\`: A JSON object where keys are file paths (e.g., "/src/App.jsx") and values are the complete, raw code for each file as a string.
+      - \`codeFiles\`: An array of objects. Each object must have a \`path\` and a \`content\` property.
 
   Example \`fileStructure\` JSON object:
   {
@@ -70,13 +73,25 @@ const prompt = ai.definePrompt({
     ]
   }
 
-  Example \`codeFiles\` JSON object:
-  {
-    "/package.json": "{\\n  \\"name\\": \\"react-app\\",\\n  \\"dependencies\\": {\\n    \\"react\\": \\"18.2.0\\",\\n    \\"react-dom\\": \\"18.2.0\\",\\n    \\"react-scripts\\": \\"5.0.1\\"\\n  }\\n}",
-    "/src/App.jsx": "import React from 'react';\\nimport './styles.css';\\n\\nexport default function App() {\\n  return <h1>Hello from my App!</h1>;\\n}",
-    "/src/index.js": "import React from 'react';\\nimport { createRoot } from 'react-dom/client';\\nimport App from './App';\\n\\nconst root = createRoot(document.getElementById('root'));\\nroot.render(<App />);",
-    "/src/styles.css": "body { font-family: sans-serif; }"
-  }
+  Example \`codeFiles\` array:
+  [
+    {
+      "path": "/package.json",
+      "content": "{\\n  \\"name\\": \\"react-app\\",\\n  \\"dependencies\\": {\\n    \\"react\\": \\"18.2.0\\",\\n    \\"react-dom\\": \\"18.2.0\\",\\n    \\"react-scripts\\": \\"5.0.1\\"\\n  }\\n}"
+    },
+    {
+      "path": "/src/App.jsx",
+      "content": "import React from 'react';\\nimport './styles.css';\\n\\nexport default function App() {\\n  return <h1>Hello from my App!</h1>;\\n}"
+    },
+    {
+      "path": "/src/index.js",
+      "content": "import React from 'react';\\nimport { createRoot } from 'react-dom/client';\\nimport App from './App';\\n\\nconst root = createRoot(document.getElementById('root'));\\nroot.render(<App />);"
+    },
+    {
+      "path": "/src/styles.css",
+      "content": "body { font-family: sans-serif; }"
+    }
+  ]
 
   User Prompt: {{{prompt}}}
 `,
