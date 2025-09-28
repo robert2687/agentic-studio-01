@@ -17,9 +17,17 @@ const GenerateInitialAppInputSchema = z.object({
 });
 export type GenerateInitialAppInput = z.infer<typeof GenerateInitialAppInputSchema>;
 
+const FileNodeSchema: z.ZodType<any> = z.lazy(() => z.object({
+  name: z.string(),
+  type: z.enum(['folder', 'file']),
+  path: z.string(),
+  children: z.optional(z.array(FileNodeSchema)),
+}));
+
+
 const GenerateInitialAppOutputSchema = z.object({
-  fileStructure: z.any().describe('The generated file structure as a JSON object. Each file should have a `path` property.'),
-  codeFiles: z.any().describe('The generated code files as a JSON object, where keys are file paths and values are file contents.'),
+  fileStructure: FileNodeSchema.describe('The generated file structure as a JSON object. Each file should have a `path` property.'),
+  codeFiles: z.record(z.string()).describe('A JSON object where keys are file paths and values are the complete, raw code for each file as a string.'),
 });
 export type GenerateInitialAppOutput = z.infer<typeof GenerateInitialAppOutputSchema>;
 
@@ -85,3 +93,4 @@ const generateInitialAppFlow = ai.defineFlow(
     return output!;
   }
 );
+
