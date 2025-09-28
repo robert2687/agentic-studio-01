@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, Upload, Download, ArrowUp, Send, Bell, Settings, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -93,6 +93,8 @@ export default function LoginPage() {
 }
   `;
 
+const EDITOR_STORAGE_KEY = 'synapse-editor-code';
+
 export default function AgenticStudioPage() {
   const [fileStructure, setFileStructure] = useState<FileNode>(initialFileStructure);
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
@@ -105,7 +107,7 @@ export default function AgenticStudioPage() {
   const [activeCodeFile, setActiveCodeFile] = useState('src/App.jsx');
   
   const [code, setCode] = useState(initialCode);
-  const { isSaving } = useAutoSave(code);
+  const { isSaving } = useAutoSave(code, EDITOR_STORAGE_KEY);
 
   const [codeFiles, setCodeFiles] = useState<{ [key: string]: string }>({
     'src/App.jsx': initialCode,
@@ -116,6 +118,17 @@ export default function AgenticStudioPage() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const { toast } = useToast();
+
+  useEffect(() => {
+    try {
+      const savedCode = localStorage.getItem(EDITOR_STORAGE_KEY);
+      if (savedCode) {
+        setCode(JSON.parse(savedCode));
+      }
+    } catch (error) {
+      console.error("Failed to load from localStorage", error);
+    }
+  }, []);
 
   const runAgentWorkflow = useCallback(() => {
     const newAgents = [...initialAgents];

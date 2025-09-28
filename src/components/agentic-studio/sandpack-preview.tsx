@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -24,6 +25,7 @@ export const SandpackPreview: React.FC<SandpackPreviewProps> = ({ code }) => {
                 showConsoleButton: false,
                 editorHeight: '100%',
                 previewHeight: '100%',
+                readOnly: true,
             }}
             theme="dark"
         />
