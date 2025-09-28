@@ -38,6 +38,9 @@ export const SandpackPreviewComponent: React.FC<SandpackPreviewComponentProps> =
             template="react"
             files={sandpackFiles}
             theme="dark"
+            options={{
+              entry: '/src/index.js'
+            }}
         >
             <SandpackLayout>
                 <SandpackPreview 
@@ -51,3 +54,4 @@ export const SandpackPreviewComponent: React.FC<SandpackPreviewComponentProps> =
     );
 };
 
+    

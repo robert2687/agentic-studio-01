@@ -7,16 +7,21 @@ import { Sandpack } from "@codesandbox/sandpack-react";
 interface CodeEditorViewProps {
     files: { [key: string]: string };
     activeFile: string;
+    code: string;
     onCodeChange: (newCode: string) => void;
 }
 
-export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFile, onCodeChange }) => {
+export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFile, code, onCodeChange }) => {
     
-    const sandpackFiles = Object.entries(files).reduce((acc, [path, code]) => {
+    const sandpackFiles = Object.entries(files).reduce((acc, [path, fileContent]) => {
         const sandpackPath = path.startsWith('/') ? path : `/${path}`;
-        acc[sandpackPath] = code;
+        if (path === activeFile) {
+            acc[sandpackPath] = { code: code, active: true };
+        } else {
+            acc[sandpackPath] = fileContent;
+        }
         return acc;
-    }, {} as { [key: string]: string });
+    }, {} as { [key: string]: any });
 
     return (
         <div className="h-full w-full bg-card">
@@ -24,11 +29,10 @@ export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFil
                 template="react"
                 files={sandpackFiles}
                 options={{
-                    activeFile: activeFile.startsWith('/') ? activeFile : `/${activeFile}`,
                     showLineNumbers: true,
                     showInlineErrors: true,
                     showNavigator: false,
-                    showTabs: false,
+                    showTabs: true,
                     showConsole: false,
                     showConsoleButton: false,
                     editorHeight: 'calc(100vh - 100px)',
@@ -40,3 +44,5 @@ export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFil
         </div>
     );
 };
+
+    

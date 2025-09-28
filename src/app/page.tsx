@@ -29,7 +29,8 @@ const initialFileStructure: FileNode = {
       path: '/src',
       children: [
         { name: 'App.jsx', type: 'file', path: '/src/App.jsx' },
-        { name: 'index.css', type: 'file', path: '/src/index.css' },
+        { name: 'index.js', type: 'file', path: '/src/index.js' },
+        { name: 'styles.css', type: 'file', path: '/src/styles.css' },
       ],
     },
     { name: 'package.json', type: 'file', path: '/package.json' },
@@ -47,6 +48,7 @@ const initialAgents: Agent[] = [
 
 const initialCode = `
 import React from 'react';
+import './styles.css';
 
 export default function App() {
   return (
@@ -56,6 +58,19 @@ export default function App() {
     </div>
   )
 }
+`;
+
+const initialIndexJs = `
+import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App";
+
+const root = createRoot(document.getElementById("root"));
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
 `;
 
 const EDITOR_STORAGE_KEY = 'synapse-editor-code';
@@ -76,8 +91,9 @@ export default function AgenticStudioPage() {
 
   const [codeFiles, setCodeFiles] = useState<{ [key: string]: string }>({
     '/src/App.jsx': initialCode,
-    '/src/index.css': '/* CSS content */',
-    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "react-scripts": "5.0.1" } }',
+    '/src/styles.css': 'body { margin: 0; }',
+    '/src/index.js': initialIndexJs,
+    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "react-scripts": "5.0.1" }, "main": "/src/index.js" }',
   });
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -148,7 +164,7 @@ export default function AgenticStudioPage() {
                     setFileStructure(newFileStructure);
                     setCodeFiles(newCodeFiles);
                     
-                    const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App') || name.includes('index') || name.includes('page')) || '/src/App.jsx';
+                    const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.jsx') || name.includes('index.js')) || '/src/App.jsx';
                     setCode(newCodeFiles[mainFile] || initialCode);
                     setActiveCodeFile(mainFile);
 
@@ -186,7 +202,7 @@ export default function AgenticStudioPage() {
   }, [activeCodeFile]);
 
   const handleFileSelect = (path: string) => {
-    if (codeFiles[path]) {
+    if (codeFiles[path] !== undefined) {
       setActiveCodeFile(path);
       setCode(codeFiles[path]);
     }
@@ -269,7 +285,7 @@ export default function AgenticStudioPage() {
             </div>
             <div className="flex-1 overflow-hidden bg-background">
               {centerView === 'chat' && <ChatView messages={messages} onSendMessage={handleSendMessage} />}
-              {centerView === 'code' && <CodeEditorView files={codeFiles} activeFile={activeCodeFile} onCodeChange={handleCodeChange} />}
+              {centerView === 'code' && <CodeEditorView files={codeFiles} activeFile={activeCodeFile} onCodeChange={handleCodeChange} code={code} />}
               {centerView === 'canvas' && <CanvasView />}
             </div>
           </Panel>
