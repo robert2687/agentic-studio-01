@@ -6,23 +6,25 @@ import { SandpackProvider, SandpackLayout, SandpackPreview, useSandpack } from "
 import { Button } from '../ui/button';
 import { ExternalLink } from 'lucide-react';
 
-interface SandpackPreviewProps {
+interface SandpackPreviewComponentProps {
     files: { [key: string]: string };
 }
 
 const OpenInNewWindowButton = () => {
     const { sandpack } = useSandpack();
     const openInNewWindow = () => {
-        sandpack.openInNewWindow();
+        if (sandpack.clientId) {
+            window.open(`https://sandpack.codesandbox.io/p/v2/embed.html?clientId=${sandpack.clientId}`, '_blank');
+        }
     }
     return (
-        <Button size="sm" variant="outline" onClick={openInNewWindow}>
+        <Button size="sm" variant="outline" onClick={openInNewWindow} disabled={!sandpack.clientId}>
             <ExternalLink size={16} className="mr-2" /> Open in New Window
         </Button>
     )
 }
 
-export const SandpackPreviewComponent: React.FC<SandpackPreviewProps> = ({ files }) => {
+export const SandpackPreviewComponent: React.FC<SandpackPreviewComponentProps> = ({ files }) => {
     
     const sandpackFiles = Object.entries(files).reduce((acc, [path, code]) => {
         const sandpackPath = path.startsWith('/') ? path : `/${path}`;
