@@ -132,7 +132,10 @@ export default function AgenticStudioPage() {
                   const newCodeFiles = result.codeFiles;
 
                   if (!newFileStructure || !newCodeFiles) {
-                    throw new Error("AI failed to generate file structure or code files.");
+                    console.error("AI failed to generate file structure or code files.", result);
+                    setMessages(prev => [...prev, { sender: 'ai', text: "Sorry, an error occurred while building the application. The AI agents failed to generate the necessary files." }]);
+                    setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Error: AI generation failed. Missing file structure or code files." }]);
+                    return;
                   }
 
                   setFileStructure(newFileStructure);
