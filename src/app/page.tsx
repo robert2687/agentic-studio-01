@@ -1,8 +1,8 @@
 
 "use client";
 
-import React, { useState, useCallback } from 'react';
-import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, Send, Bell, Settings } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, Upload, Download, ArrowUp, Send, Bell, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { AgentStatus, type Agent } from '@/components/agentic-studio/agent-status';
@@ -124,121 +124,36 @@ export default function AgenticStudioPage() {
   const [activeCodeFile, setActiveCodeFile] = useState('LoginPage.jsx');
   const { toast } = useToast();
 
-  const addLog = useCallback((agent: string, message: string, color: string = 'text-green-400') => {
-      const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
-      setLogs(prev => [...prev, { timestamp, agent, message, color }]);
-  }, []);
-
-  const runAgentWorkflow = useCallback(() => {
-    let currentAgents = [...initialAgents];
-    
-    const updateAgent = (id: number, status: Agent['status'], progress: number) => {
-        currentAgents = currentAgents.map(a => a.id === id ? { ...a, status, progress } : a);
-        setAgents([...currentAgents]);
-    };
-
-    addLog('Orchestrator', 'Received request to create a login page.', 'text-yellow-300');
-    
-    setTimeout(() => {
-        addLog('Orchestrator', 'Analyzing requirements...');
-        updateAgent(1, 'Working', 50);
-    }, 500);
-
-    setTimeout(() => {
-        updateAgent(1, 'Working', 100);
-        addLog('Requirements Analyst', 'Specifications extracted. Input: text, Output: PRD.', 'text-cyan-400');
-    }, 1500);
-
-    setTimeout(() => {
-        updateAgent(1, 'Done', 100);
-        addLog('Orchestrator', 'Assigning task to UI/UX Architect.');
-        updateAgent(2, 'Working', 25);
-    }, 2000);
-
-    setTimeout(() => {
-        addLog('UI/UX Architect', 'Generating wireframe in Gemini Canvas...', 'text-purple-400');
-        updateAgent(2, 'Working', 75);
-        setCenterView('canvas');
-        toast({ title: "UI/UX Agent", description: "Gemini Canvas has been updated."});
-    }, 3000);
-
-    setTimeout(() => {
-        updateAgent(2, 'Done', 100);
-        addLog('Orchestrator', 'Design approved. Assigning task to Frontend Coder.');
-        updateAgent(3, 'Working', 10);
-    }, 4500);
-    
-    setTimeout(() => {
-        addLog('Frontend Coder', 'Creating file `src/pages/LoginPage.jsx`...', 'text-pink-400');
-        updateAgent(3, 'Working', 30);
-        setFileStructure(prev => {
-            const newStruct = JSON.parse(JSON.stringify(prev));
-            newStruct.children[0].children[1].children[1].status = 'generating';
-            return newStruct;
-        });
-    }, 5500);
-
-    setTimeout(() => {
-        addLog('Frontend Coder', 'Writing React code for the login form.', 'text-pink-400');
-        updateAgent(3, 'Working', 80);
-        setCenterView('code');
-        setActiveCodeFile('LoginPage.jsx');
-        toast({ title: "Frontend Agent", description: "Code for LoginPage.jsx has been generated."});
-    }, 7000);
-
-    setTimeout(() => {
-        updateAgent(3, 'Done', 100);
-        addLog('Frontend Coder', 'Component `LoginPage` is ready for review.', 'text-pink-400');
-        setFileStructure(prev => {
-            const newStruct = JSON.parse(JSON.stringify(prev));
-            newStruct.children[0].children[1].children[1].status = 'done';
-            return newStruct;
-        });
-        setMessages(prev => [...prev, { sender: 'ai', text: 'The Frontend Coder has finished implementing `LoginPage.jsx`. The code is ready for review in the **Code** tab and a preview is available in the **Live Preview**.' }]);
-    }, 9000);
-    
-    setTimeout(() => {
-        addLog('Orchestrator', 'Assigning task to QA Agent.');
-        updateAgent(5, 'Working', 20);
-    }, 9500);
-
-    setTimeout(() => {
-        addLog('QA & Security', 'Running unit tests for `LoginPage.jsx`...', 'text-teal-400');
-        updateAgent(5, 'Working', 70);
-    }, 10500);
-
-    setTimeout(() => {
-        updateAgent(5, 'Done', 100);
-        addLog('QA & Security', 'Tests passed. Coverage: 85%. No critical vulnerabilities found.', 'text-teal-400');
-        setMessages(prev => [...prev, { sender: 'ai', text: 'The QA Agent has confirmed the code quality and security. Awaiting your approval or further instructions.' }]);
-    }, 12000);
-
-  }, [addLog, toast]);
-
-  const handleSendMessage = useCallback((text: string) => {
+  const handleSendMessage = (text: string) => {
     setMessages(prev => [...prev, { sender: 'user', text }]);
-    
-    if (text.toLowerCase().includes('login page')) {
-        setTimeout(() => {
-            setMessages(prev => [...prev, { sender: 'ai', text: 'Understood. Starting the workflow to create a login page. I will keep you updated on the progress.' }]);
-            runAgentWorkflow();
-        }, 1000);
-    } else {
-        setTimeout(() => {
-            setMessages(prev => [...prev, { sender: 'ai', text: 'Your instruction has been noted. I am currently configured for a demo workflow for a "login page". Try giving that instruction.' }]);
-        }, 1000);
-    }
-  }, [runAgentWorkflow]);
+    // Mock AI response
+    setTimeout(() => {
+        setMessages(prev => [...prev, { sender: 'ai', text: 'Your instruction has been noted. I will begin working on it shortly.' }]);
+    }, 1000);
+  };
 
   return (
     <div className="bg-background text-foreground h-screen flex flex-col font-sans">
       <header className="flex items-center justify-between h-14 px-4 border-b border-border flex-shrink-0 bg-card">
         <div className="flex items-center space-x-4">
           <Bot size={24} className="text-primary" />
-          <h1 className="text-lg font-grotesk font-bold">Agentic Studio</h1>
+          <h1 className="text-lg font-grotesk font-bold">Synapse IDE</h1>
           <div className="flex items-center bg-muted px-3 py-1 rounded-md text-sm">
             <GitBranch size={14} className="mr-2" />
             <span>main</span>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => toast({ title: "Committing...", description: "Staging changes and committing to the local branch." })}>
+            Commit
+          </Button>
+          <div className="flex items-center space-x-1">
+            <Button variant="outline" size="sm" onClick={() => toast({ title: "Pushing...", description: "Pushing changes to the remote repository." })}>
+              <ArrowUp size={14} className="mr-2" />
+              Push
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => toast({ title: "Pulling...", description: "Fetching and merging changes from the remote." })}>
+              <Download size={14} className="mr-2" />
+              Pull
+            </Button>
           </div>
         </div>
         <div className="flex items-center space-x-2">
@@ -252,7 +167,7 @@ export default function AgenticStudioPage() {
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => toast({ title: "Settings", description: "Settings page is not implemented yet." })}>
             <Settings size={20} />
           </Button>
-          <Avatar className="h-8 w-8">
+          <Avatar>
             <AvatarFallback className="bg-primary text-primary-foreground font-bold text-sm">U</AvatarFallback>
           </Avatar>
         </div>
@@ -315,3 +230,5 @@ export default function AgenticStudioPage() {
     </div>
   );
 }
+
+    
