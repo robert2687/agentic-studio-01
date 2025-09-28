@@ -7,6 +7,7 @@ import { Folder, File, ChevronRight, ChevronDown, LoaderCircle } from 'lucide-re
 export type FileNode = {
   name: string;
   type: 'folder' | 'file';
+  path?: string;
   status?: 'generating' | 'done';
   children?: FileNode[];
 };
@@ -14,15 +15,18 @@ export type FileNode = {
 interface FileTreeProps {
   node: FileNode;
   level?: number;
+  onFileSelect: (path: string) => void;
 }
 
-export const FileTree: React.FC<FileTreeProps> = ({ node, level = 0 }) => {
+export const FileTree: React.FC<FileTreeProps> = ({ node, level = 0, onFileSelect }) => {
   const [isOpen, setIsOpen] = useState(level < 2);
   const isFolder = node.type === 'folder';
 
-  const toggleOpen = () => {
+  const handleClick = () => {
     if (isFolder) {
       setIsOpen(!isOpen);
+    } else if (node.path) {
+      onFileSelect(node.path);
     }
   };
 
@@ -34,7 +38,7 @@ export const FileTree: React.FC<FileTreeProps> = ({ node, level = 0 }) => {
       <div
         className={`flex items-center py-1.5 px-2 rounded-md cursor-pointer hover:bg-muted text-foreground`}
         style={{ paddingLeft: `${level * 16 + 4}px` }}
-        onClick={toggleOpen}
+        onClick={handleClick}
       >
         <div className="w-4 mr-2 flex-shrink-0">
           {isFolder && <ChevronIcon size={16} />}
@@ -46,7 +50,7 @@ export const FileTree: React.FC<FileTreeProps> = ({ node, level = 0 }) => {
       {isFolder && isOpen && node.children && (
         <div>
           {node.children.map((child, index) => (
-            <FileTree key={index} node={child} level={level + 1} />
+            <FileTree key={index} node={{...child, path: node.path ? `${node.path}/${child.name}` : child.name }} level={level + 1} onFileSelect={onFileSelect} />
           ))}
         </div>
       )}
