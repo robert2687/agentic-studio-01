@@ -1,4 +1,6 @@
 
+@import "https://sandpack.codesandbox.io/style.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
