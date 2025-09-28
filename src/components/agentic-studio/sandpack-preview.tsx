@@ -2,39 +2,49 @@
 "use client";
 
 import React from 'react';
-import { Sandpack } from "@codesandbox/sandpack-react";
+import { SandpackProvider, SandpackLayout, SandpackPreview, useSandpack } from "@codesandbox/sandpack-react";
+import { Button } from '../ui/button';
+import { ExternalLink } from 'lucide-react';
 
 interface SandpackPreviewProps {
     files: { [key: string]: string };
 }
 
-export const SandpackPreview: React.FC<SandpackPreviewProps> = ({ files }) => {
+const OpenInNewWindowButton = () => {
+    const { sandpack } = useSandpack();
+    const openInNewWindow = () => {
+        sandpack.openInNewWindow();
+    }
+    return (
+        <Button size="sm" variant="outline" onClick={openInNewWindow}>
+            <ExternalLink size={16} className="mr-2" /> Open in New Window
+        </Button>
+    )
+}
+
+export const SandpackPreviewComponent: React.FC<SandpackPreviewProps> = ({ files }) => {
     
     const sandpackFiles = Object.entries(files).reduce((acc, [path, code]) => {
-        // Sandpack expects paths to start with /
         const sandpackPath = path.startsWith('/') ? path : `/${path}`;
         acc[sandpackPath] = code;
         return acc;
     }, {} as { [key: string]: string });
 
     return (
-        <Sandpack
+        <div className="h-full w-full">
+        <SandpackProvider
             template="react"
             files={sandpackFiles}
-            options={{
-                showLineNumbers: true,
-                showInlineErrors: true,
-                showNavigator: true,
-                showTabs: true,
-                showConsole: true,
-                showConsoleButton: true,
-                editorHeight: '100%',
-                previewHeight: '100%',
-                readOnly: false,
-            }}
             theme="dark"
-        />
+        >
+            <SandpackLayout>
+                <SandpackPreview 
+                    showNavigator={true}
+                    showRefreshButton={true}
+                    actionsChildren={<OpenInNewWindowButton />}
+                />
+            </SandpackLayout>
+        </SandpackProvider>
+        </div>
     );
 };
-
-    

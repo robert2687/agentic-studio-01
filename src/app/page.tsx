@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, Upload, Download, ArrowUp, Send, Bell, Settings, Save } from 'lucide-react';
+import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, ArrowUp, Download, Send, Bell, Settings, Save } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -11,7 +11,7 @@ import { FileTree, type FileNode } from '@/components/agentic-studio/file-tree';
 import { ChatView, type Message } from '@/components/agentic-studio/chat-view';
 import { CodeEditorView } from '@/components/agentic-studio/code-editor';
 import { CanvasView } from '@/components/agentic-studio/canvas-view';
-import { SandpackPreview } from '@/components/agentic-studio/sandpack-preview';
+import { SandpackPreviewComponent } from '@/components/agentic-studio/sandpack-preview';
 import { LogsView, type Log } from '@/components/agentic-studio/logs-view';
 import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from '@/hooks/use-auto-save';
@@ -271,9 +271,9 @@ export default function AgenticStudioPage() {
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden p-4">
-              {rightView === 'preview' && <SandpackPreview files={codeFiles} />}
-              {rightView === 'logs' && <LogsView logs={logs} />}
+            <div className="flex-1 overflow-hidden">
+              {rightView === 'preview' && <SandpackPreviewComponent files={codeFiles} />}
+              {rightView === 'logs' && <div className="p-4"><LogsView logs={logs} /></div>}
             </div>
           </Panel>
         </PanelGroup>
