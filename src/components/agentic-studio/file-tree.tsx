@@ -7,7 +7,7 @@ import { Folder, File, ChevronRight, ChevronDown, LoaderCircle } from 'lucide-re
 export type FileNode = {
   name: string;
   type: 'folder' | 'file';
-  path?: string;
+  path: string;
   status?: 'generating' | 'done';
   children?: FileNode[];
 };
@@ -49,13 +49,12 @@ export const FileTree: React.FC<FileTreeProps> = ({ node, level = 0, onFileSelec
       </div>
       {isFolder && isOpen && node.children && (
         <div>
-          {node.children.map((child, index) => (
-            <FileTree key={index} node={{...child, path: node.path ? `${node.path}/${child.name}` : child.name }} level={level + 1} onFileSelect={onFileSelect} />
-          ))}
+          {node.children.map((child, index) => {
+            const childPath = node.path === '/' ? `/${child.name}` : `${node.path}/${child.name}`;
+            return <FileTree key={index} node={{...child, path: childPath }} level={level + 1} onFileSelect={onFileSelect} />
+          })}
         </div>
       )}
     </div>
   );
 };
-
-    
