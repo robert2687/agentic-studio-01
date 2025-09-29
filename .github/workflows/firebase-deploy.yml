@@ -14,21 +14,16 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '20'
 
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+      - run: npm install
+      - run: npm install -g firebase-tools
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Deploy Firestore rules, indexes, and functions
+      - name: Deploy Firestore rules, indexes, functions, and Hosting live
         run: |
           firebase deploy --only firestore:rules,firestore:indexes,functions,hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
@@ -38,22 +33,14 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '20'
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
-
-      - name: Install dependencies
-        run: npm install
       
-      - name: Build project
-        run: npm run build
+      - run: npm install
+      - run: npm run build
 
       - name: Deploy to Hosting Preview Channel
         id: hosting_deploy
@@ -63,7 +50,7 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: "${{ secrets.FIREBASE_PROJECT_ID }}"
           channelId: pr-${{ github.event.pull_request.number }}
-          target: agentic-studio # You might need to change this to your hosting target name
+          target: agentic-studio
 
       - name: Comment PR with Preview URL
         uses: marocchino/sticky-pull-request-comment@v2
@@ -78,16 +65,11 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: '20'
-
-      - name: Install Firebase CLI
-        run: npm install -g firebase-tools
+      - run: npm install -g firebase-tools
 
       - name: Delete Hosting Preview Channel
         run: |
