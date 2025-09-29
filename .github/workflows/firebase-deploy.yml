@@ -7,6 +7,7 @@ on:
   pull_request:
     branches:
       - main
+    types: [opened, synchronize, reopened, closed]
 
 jobs:
   deploy:
@@ -34,7 +35,7 @@ jobs:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
   preview:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -62,3 +63,24 @@ jobs:
           projectId: "${{ secrets.FIREBASE_PROJECT_ID }}"
           channelId: pr-${{ github.event.pull_request.number }}
           target: agentic-studio # You might need to change this to your hosting target name
+
+  teardown:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Delete Hosting Preview Channel
+        run: |
+          firebase hosting:channel:delete pr-${{ github.event.pull_request.number }} --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
