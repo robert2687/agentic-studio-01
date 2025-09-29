@@ -53,5 +53,3 @@ export const SandpackPreviewComponent: React.FC<SandpackPreviewComponentProps> =
         </div>
     );
 };
-
-    
