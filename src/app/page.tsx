@@ -187,7 +187,7 @@ Passing the blueprint to the Coder.` }]);
                 agentRunner("Reviewer Agent", 2500, () => {
                     setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the Firestore security rules for least-privilege access and validated the immutability guarantees for versioned documents. Code approved. Handing off for deployment.' }]);
                     agentRunner("Deployer Agent", 1500, () => {
-                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided a step-by-step guide for deploying the Firestore rules, audit-logging Cloud Functions, and CI/CD pipeline. The application upgrade is ready.' }]);
+                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided a step-by-step guide for deploying the Firestore rules, audit-logging Cloud Functions, and a CI/CD pipeline that includes **preview channels for Hosting**, ensuring every PR gets its own isolated test environment. The application upgrade is ready.' }]);
                         setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow complete. All agents finished." }]);
                     });
                 });
@@ -347,3 +347,4 @@ PROJECT CONTEXT:
     
 
     
+
