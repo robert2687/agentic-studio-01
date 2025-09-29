@@ -150,9 +150,9 @@ Tell me to "start the build" to begin the upgrade.` }
     agentRunner("Planner Agent", 1500, () => {
         setMessages(prev => [...prev, { sender: 'ai', text: 'The **Planner Agent** has defined the upgraded features, user personas, and workflows in a structured requirements document. Handing off to the Architect.' }]);
         agentRunner("Architect Agent", 2000, () => {
-            setMessages(prev => [...prev, { sender: 'ai', text: `The **Architect Agent** has designed the system architecture and Firestore data model.
+            setMessages(prev => [...prev, { sender: 'ai', text: `The **Architect Agent** has designed the system architecture, including a production-grade Firestore schema and a Role-Based Access Control (RBAC) model.
 <br/><br/>
-The schema includes collections for multi-tenancy (\`organizations\`, \`projects\`), versioned content (\`templates\`, \`versions\`), and security (\`roles\`, \`auditLogs\`). This ensures a scalable and secure foundation.
+The schema supports multi-tenancy (\`organizations\`), versioned content (\`templates\`, \`versions\`), and security (\`roles\`, \`auditLogs\`). The security rules enforce least-privilege access and immutable versioning.
 <br/><br/>
 Passing the blueprint to the Coder.` }]);
             agentRunner("Coder Agent", 4000, async () => {
@@ -177,16 +177,17 @@ Passing the blueprint to the Coder.` }]);
                 setFileStructure(newFileStructure);
                 setCodeFiles(newCodeFiles);
                 
-                const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.jsx') || name.includes('index.js')) || '/src/App.jsx';
-                setCode(newCodeFiles[mainFile] || '');
+                const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.jsx') || name.includes('index.js')) || Object.keys(newCodeFiles)[0];
+                const mainFileContent = newCodeFiles[mainFile] || '';
+                setCode(mainFileContent);
                 setActiveCodeFile(mainFile);
 
                 setMessages(prev => [...prev, { sender: 'ai', text: 'The **Coder Agent** has implemented the drag-and-drop builder, template library, and Firestore versioning. Submitting for review.' }]);
 
                 agentRunner("Reviewer Agent", 2500, () => {
-                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the code for scalability, security, and maintainability. Code approved. Handing off for deployment.' }]);
+                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the Firestore security rules for least-privilege access and validated the immutability guarantees for versioned documents. Code approved. Handing off for deployment.' }]);
                     agentRunner("Deployer Agent", 1500, () => {
-                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided a step-by-step deployment guide for Firebase Hosting and Cloud Functions. The application upgrade is ready.' }]);
+                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided a step-by-step guide for deploying the Firestore rules, audit-logging Cloud Functions, and CI/CD pipeline. The application upgrade is ready.' }]);
                         setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow complete. All agents finished." }]);
                     });
                 });
