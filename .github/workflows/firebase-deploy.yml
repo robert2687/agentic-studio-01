@@ -56,6 +56,7 @@ jobs:
         run: npm run build
 
       - name: Deploy to Hosting Preview Channel
+        id: hosting_deploy
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
@@ -63,6 +64,15 @@ jobs:
           projectId: "${{ secrets.FIREBASE_PROJECT_ID }}"
           channelId: pr-${{ github.event.pull_request.number }}
           target: agentic-studio # You might need to change this to your hosting target name
+
+      - name: Comment PR with Preview URL
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: firebase-preview
+          message: |
+            🚀 Firebase Hosting Preview is ready!
+
+            🔗 **Preview URL:** ${{ steps.hosting_deploy.outputs.details_url }}
 
   teardown:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
