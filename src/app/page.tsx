@@ -82,15 +82,14 @@ export default function AgenticStudioPage() {
   const [messages, setMessages] = useState<Message[]>([
     { sender: 'ai', text: `Welcome to **Agentic Studio**. I am your AI project manager.
 <br/><br/>
-My team of agents is ready to build a new **AI Builder Studio** with the following features based on our production-ready protocol:
-- Drag-and-drop form builder
-- Template library with tags/categories
-- Firestore versioning for templates
-- Role-Based Access Control (RBAC)
-- Audit logging for all actions
-- Diff views for template changes
+My team of agents is ready to generate a production-ready upgrade for the **AI Builder Studio**. The plan includes:
+- A modular drag-and-drop form builder
+- A template library with categories and search
+- Firestore for versioning and history with a diff view
+- Role-Based Access Control (RBAC) and audit logging
+- A secure Node.js/Express backend with CI/CD
 <br/><br/>
-Tell me to "start the build" to begin.` }
+Tell me to "start the build" to begin the upgrade.` }
   ]);
   const [logs, setLogs] = useState<Log[]>([]);
   const [activeCodeFile, setActiveCodeFile] = useState('/src/App.jsx');
@@ -113,7 +112,10 @@ Tell me to "start the build" to begin.` }
     try {
       const savedCode = localStorage.getItem(EDITOR_STORAGE_KEY);
       if (savedCode) {
-        setCode(JSON.parse(savedCode));
+        const parsedCode = JSON.parse(savedCode);
+        if (typeof parsedCode === 'string') {
+          setCode(parsedCode);
+        }
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
@@ -146,9 +148,9 @@ Tell me to "start the build" to begin.` }
     };
 
     agentRunner("Planner Agent", 1500, () => {
-        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Planner Agent** has defined the features, user flows, and tech stack in a structured requirements document. Handing off to the Architect.' }]);
+        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Planner Agent** has defined the upgraded features, user personas, and workflows in a structured requirements document. Handing off to the Architect.' }]);
         agentRunner("Architect Agent", 2000, () => {
-            setMessages(prev => [...prev, { sender: 'ai', text: 'The **Architect Agent** has designed the system architecture, database schema, and API contracts. Passing the blueprint to the Coder.' }]);
+            setMessages(prev => [...prev, { sender: 'ai', text: 'The **Architect Agent** has designed the modular architecture, versioned Firestore schema, and RBAC model. Passing the blueprint to the Coder.' }]);
             agentRunner("Coder Agent", 4000, async () => {
               setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Coder Agent", message: "Generating file structure and code..." }]);
               try {
@@ -156,7 +158,7 @@ Tell me to "start the build" to begin.` }
                 const newFileStructure = result.fileStructure;
                 const newCodeFilesArray = result.codeFiles;
 
-                if (!newFileStructure || !newCodeFilesArray) {
+                if (!newFileStructure || !newCodeFilesArray || newCodeFilesArray.length === 0) {
                   console.error("AI failed to generate file structure or code files.", result);
                   setMessages(prev => [...prev, { sender: 'ai', text: "Sorry, an error occurred while building the application. The AI agents failed to generate the necessary files." }]);
                   setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Error: AI generation failed. Missing file structure or code files." }]);
@@ -172,15 +174,15 @@ Tell me to "start the build" to begin.` }
                 setCodeFiles(newCodeFiles);
                 
                 const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.jsx') || name.includes('index.js')) || '/src/App.jsx';
-                setCode(newCodeFiles[mainFile] || initialCode);
+                setCode(newCodeFiles[mainFile] || '');
                 setActiveCodeFile(mainFile);
 
-                setMessages(prev => [...prev, { sender: 'ai', text: 'The **Coder Agent** has implemented the production-grade code. Submitting for review.' }]);
+                setMessages(prev => [...prev, { sender: 'ai', text: 'The **Coder Agent** has implemented the drag-and-drop builder, template library, and Firestore versioning. Submitting for review.' }]);
 
                 agentRunner("Reviewer Agent", 2500, () => {
-                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the code for scalability, security, and best practices. Code approved. Handing off for deployment.' }]);
+                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the code for scalability, security, and maintainability. Code approved. Handing off for deployment.' }]);
                     agentRunner("Deployer Agent", 1500, () => {
-                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided a step-by-step deployment guide. The application is ready and can be seen in the live preview.' }]);
+                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided a step-by-step deployment guide for Firebase Hosting and Cloud Functions. The application upgrade is ready.' }]);
                         setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow complete. All agents finished." }]);
                     });
                 });
@@ -197,7 +199,7 @@ Tell me to "start the build" to begin.` }
 
   const handleSendMessage = useCallback((text: string) => {
     setMessages(prev => [...prev, { sender: 'user', text }]);
-    const fullPrompt = `Build an "AI Builder Studio" with the following features: drag-and-drop form builder, template library with tags/categories, Firestore versioning for templates, Role-Based Access Control (RBAC), audit logging for all actions, and diff views for template changes. The user initiated with: "${text}"`;
+    const fullPrompt = `Generate a production-ready upgrade for the AI Builder Studio. The user initiated with: "${text}". The upgrade goals are: modular React components with a drag-and-drop form builder, a template library with search, Firestore versioning with a diff view, RBAC with granular permissions, and audit logging. The backend should be a secure Node.js/Express app using Firebase Cloud Functions.`;
     runAgentWorkflow(fullPrompt);
   }, [runAgentWorkflow]);
 
@@ -322,6 +324,5 @@ Tell me to "start the build" to begin.` }
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </div>
   );
-}
 
     

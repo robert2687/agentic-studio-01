@@ -76,7 +76,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages, onSendMessage }) =
                             handleSend();
                           }
                         }}
-                        placeholder="Type 'start the build' to begin..."
+                        placeholder="Type 'start the build' to begin the upgrade..."
                         className="w-full bg-muted text-foreground placeholder-muted-foreground rounded-lg py-3 pl-4 pr-12 focus-visible:ring-1 focus-visible:ring-ring resize-none"
                         rows={1}
                     />
@@ -88,5 +88,8 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages, onSendMessage }) =
         </div>
     );
 };
+
+    
+
 
     
