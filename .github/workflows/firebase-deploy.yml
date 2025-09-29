@@ -97,6 +97,19 @@ jobs:
           path: all-logs.zip
           retention-days: 7
 
+  # --- Merge logs from all Node.js versions ---
+  merge-logs:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Merge all logs into one artifact
+    steps:
+      - name: Merge all-logs.zip artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: all-logs-combined
+          pattern: all-logs-node*
+          retention-days: 7
+
   # --- Deploy job depends on build ---
   deploy:
     if: github.event_name == 'push'
