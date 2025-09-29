@@ -164,6 +164,8 @@ jobs:
       matrix:
         node-version: [18, 20]
     name: Preview (Node.js ${{ matrix.node-version }})
+    outputs:
+      preview_url_node_${{ matrix.node-version }}: ${{ steps.hosting_deploy.outputs.details_url }}
     steps:
       - uses: actions/checkout@v3
 
@@ -198,6 +200,67 @@ jobs:
             🚀 Firebase Hosting Preview (Node.js ${{ matrix.node-version }}) is ready!
 
             🔗 **Preview URL:** ${{ steps.hosting_deploy.outputs.details_url }}
+            
+  # --- Lighthouse audit job ---
+  lighthouse:
+    needs: preview
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    name: Lighthouse Audit (Node.js 20)
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm install -g @lhci/cli
+
+      - name: Wait for preview URL
+        uses: jakejarvis/wait-action@v0.1.0
+        with:
+          url: ${{ needs.preview.outputs.preview_url_node_20 }}
+          timeout: 120
+          interval: 10
+
+      - name: Run Lighthouse CI
+        id: lhci
+        run: |
+          lhci autorun --collect.url=${{ needs.preview.outputs.preview_url_node_20 }} --upload.target=temporary-public-storage || echo "LHCI failed!"
+          
+          # Extract scores from the summary and set as outputs
+          PERF=$(cat .lighthouseci/assertion-results.json | grep '"auditId": "performance"' | grep -o '"actual": [^,]*' | sed 's/"actual": //')
+          ACCESSIBILITY=$(cat .lighthouseci/assertion-results.json | grep '"auditId": "accessibility"' | grep -o '"actual": [^,]*' | sed 's/"actual": //')
+          BEST_PRACTICES=$(cat .lighthouseci/assertion-results.json | grep '"auditId": "best-practices"' | grep -o '"actual": [^,]*' | sed 's/"actual": //')
+          SEO=$(cat .lighthouseci/assertion-results.json | grep '"auditId": "seo"' | grep -o '"actual": [^,]*' | sed 's/"actual": //')
+
+          echo "performance=$PERF" >> $GITHUB_OUTPUT
+          echo "accessibility=$ACCESSIBILITY" >> $GITHUB_OUTPUT
+          echo "best_practices=$BEST_PRACTICES" >> $GITHUB_OUTPUT
+          echo "seo=$SEO" >> $GITHUB_OUTPUT
+
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-node-20
+          path: ./lhci_reports
+          retention-days: 7
+
+      - name: Comment PR with Lighthouse scores
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: lighthouse-report
+          message: |
+            📊 **Lighthouse Report** for PR #${{ github.event.pull_request.number }} (Node.js 20 Preview)
+
+            | Category | Score |
+            |---|---|
+            | Performance | ${{ steps.lhci.outputs.performance }} |
+            | Accessibility | ${{ steps.lhci.outputs.accessibility }} |
+            | Best Practices | ${{ steps.lhci.outputs.best_practices }} |
+            | SEO | ${{ steps.lhci.outputs.seo }} |
+
+            Full report is available in the workflow artifacts.
 
   # --- Teardown job (runs once PR closes) ---
   teardown:
@@ -218,6 +281,6 @@ jobs:
 
       - name: Delete Hosting Preview Channel
         run: |
-          firebase hosting:channel:delete pr-${{ github.event.pull_request.number }}-node${{ matrix.node-version }} --project ${{ secrets.FIREBASE_PROJECT_ID }} --force
+          firebase hosting:channel:delete pr-${{ github.event.pull_request.number }}-node${{ matrix.node-version }} --force --project ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
