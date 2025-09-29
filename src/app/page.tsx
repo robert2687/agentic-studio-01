@@ -38,12 +38,11 @@ const initialFileStructure: FileNode = {
 };
 
 const initialAgents: Agent[] = [
-  { id: 1, name: 'Requirements Analyst', status: 'Idle', progress: 0 },
-  { id: 2, name: 'UI/UX Architect', status: 'Idle', progress: 0 },
-  { id: 3, name: 'Backend Coder', status: 'Idle', progress: 0 },
-  { id: 4, name: 'Frontend Coder', status: 'Idle', progress: 0 },
-  { id: 5, name: 'QA & Security Agent', status: 'Idle', progress: 0 },
-  { id: 6, name: 'DevOps & Deployment', status: 'Idle', progress: 0 },
+  { id: 1, name: 'Planner Agent', status: 'Idle', progress: 0 },
+  { id: 2, name: 'Architect Agent', status: 'Idle', progress: 0 },
+  { id: 3, name: 'Coder Agent', status: 'Idle', progress: 0 },
+  { id: 4, name: 'Reviewer Agent', status: 'Idle', progress: 0 },
+  { id: 5, name: 'Deployer Agent', status: 'Idle', progress: 0 },
 ];
 
 const initialCode = `
@@ -53,7 +52,7 @@ import './styles.css';
 export default function App() {
   return (
     <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1>Welcome to Synapse IDE</h1>
+      <h1>Welcome to Agentic Studio</h1>
       <p>Use the chat on the left to tell me what you want to build.</p>
     </div>
   )
@@ -81,7 +80,7 @@ export default function AgenticStudioPage() {
   const [centerView, setCenterView] = useState('chat');
   const [rightView, setRightView] = useState('preview');
   const [messages, setMessages] = useState<Message[]>([
-    { sender: 'ai', text: 'Welcome to **Synapse IDE**! I am your AI project manager. Tell me what you would like to build.' }
+    { sender: 'ai', text: 'Welcome to **Agentic Studio**! I am your AI project manager. Tell me what you would like to build.' }
   ]);
   const [logs, setLogs] = useState<Log[]>([]);
   const [activeCodeFile, setActiveCodeFile] = useState('/src/App.jsx');
@@ -136,54 +135,52 @@ export default function AgenticStudioPage() {
         }, duration);
     };
 
-    agentRunner("Requirements Analyst", 1500, () => {
-        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Requirements Analyst** has defined the components and functionality needed.' }]);
-        agentRunner("UI/UX Architect", 2000, () => {
-            setMessages(prev => [...prev, { sender: 'ai', text: 'The **UI/UX Architect** has designed the overall structure.' }]);
-            agentRunner("Backend Coder", 2500, () => {
-              setMessages(prev => [...prev, { sender: 'ai', text: 'The **Backend Coder** is setting up the server logic and API endpoints.' }]);
-              agentRunner("Frontend Coder", 4000, async () => {
-                  setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Frontend Coder", message: "Generating file structure and code..." }]);
-                  try {
-                    const result = await generateInitialApp({ prompt });
-                    const newFileStructure = result.fileStructure;
-                    const newCodeFilesArray = result.codeFiles;
+    agentRunner("Planner Agent", 1500, () => {
+        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Planner Agent** has defined the features, user flows, and tech stack. Handing off to the Architect.' }]);
+        agentRunner("Architect Agent", 2000, () => {
+            setMessages(prev => [...prev, { sender: 'ai', text: 'The **Architect Agent** has designed the system architecture and data models. Passing the blueprint to the Coder.' }]);
+            agentRunner("Coder Agent", 4000, async () => {
+              setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Coder Agent", message: "Generating file structure and code..." }]);
+              try {
+                const result = await generateInitialApp({ prompt });
+                const newFileStructure = result.fileStructure;
+                const newCodeFilesArray = result.codeFiles;
 
-                    if (!newFileStructure || !newCodeFilesArray) {
-                      console.error("AI failed to generate file structure or code files.", result);
-                      setMessages(prev => [...prev, { sender: 'ai', text: "Sorry, an error occurred while building the application. The AI agents failed to generate the necessary files." }]);
-                      setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Error: AI generation failed. Missing file structure or code files." }]);
-                      return;
-                    }
+                if (!newFileStructure || !newCodeFilesArray) {
+                  console.error("AI failed to generate file structure or code files.", result);
+                  setMessages(prev => [...prev, { sender: 'ai', text: "Sorry, an error occurred while building the application. The AI agents failed to generate the necessary files." }]);
+                  setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Error: AI generation failed. Missing file structure or code files." }]);
+                  return;
+                }
 
-                    const newCodeFiles = newCodeFilesArray.reduce((acc, file) => {
-                      acc[file.path] = file.content;
-                      return acc;
-                    }, {} as { [key: string]: string });
+                const newCodeFiles = newCodeFilesArray.reduce((acc, file) => {
+                  acc[file.path] = file.content;
+                  return acc;
+                }, {} as { [key: string]: string });
 
-                    setFileStructure(newFileStructure);
-                    setCodeFiles(newCodeFiles);
-                    
-                    const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.jsx') || name.includes('index.js')) || '/src/App.jsx';
-                    setCode(newCodeFiles[mainFile] || initialCode);
-                    setActiveCodeFile(mainFile);
+                setFileStructure(newFileStructure);
+                setCodeFiles(newCodeFiles);
+                
+                const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.jsx') || name.includes('index.js')) || '/src/App.jsx';
+                setCode(newCodeFiles[mainFile] || initialCode);
+                setActiveCodeFile(mainFile);
 
-                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Frontend Coder** has implemented the application structure and code. You can view it in the editor and preview.' }]);
+                setMessages(prev => [...prev, { sender: 'ai', text: 'The **Coder Agent** has implemented the application code. Submitting for review.' }]);
 
-                    agentRunner("QA & Security Agent", 2500, () => {
-                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **QA & Security Agent** has reviewed the generated code.' }]);
-                        agentRunner("DevOps & Deployment", 1500, () => {
-                            setMessages(prev => [...prev, { sender: 'ai', text: 'All agents have completed their tasks. The application is ready and can be seen in the live preview.' }]);
-                            setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow complete. All agents finished." }]);
-                        });
+                agentRunner("Reviewer Agent", 2500, () => {
+                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the code for quality, security, and best practices. Code approved. Handing off for deployment instructions.' }]);
+                    agentRunner("Deployer Agent", 1500, () => {
+                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided deployment instructions. The application is ready and can be seen in the live preview.' }]);
+                        setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow complete. All agents finished." }]);
                     });
-                  } catch (error) {
-                    console.error("Error generating app:", error);
-                    setMessages(prev => [...prev, { sender: 'ai', text: `An error occurred while building the application: ${(error as Error).message}` }]);
-                    setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `Error during generation: ${(error as Error).message}` }]);
-                  }
-              });
-            });
+                });
+              } catch (error) {
+                console.error("Error generating app:", error);
+                const errorMessage = (error as Error).message || 'An unknown error occurred.';
+                setMessages(prev => [...prev, { sender: 'ai', text: `An error occurred while building the application: ${errorMessage}` }]);
+                setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `Error during generation: ${errorMessage}` }]);
+              }
+          });
         });
     });
   }, []);
@@ -214,7 +211,7 @@ export default function AgenticStudioPage() {
       <header className="flex items-center justify-between h-14 px-4 border-b border-border flex-shrink-0 bg-card">
         <div className="flex items-center space-x-4">
           <Bot size={24} className="text-primary" />
-          <h1 className="text-lg font-grotesk font-bold">Synapse IDE</h1>
+          <h1 className="text-lg font-grotesk font-bold">Agentic Studio</h1>
           <div className="flex items-center bg-muted px-3 py-1 rounded-md text-sm">
             <GitBranch size={14} className="mr-2" />
             <span>main</span>
