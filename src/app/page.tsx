@@ -51,9 +51,9 @@ import './styles.css';
 
 export default function App() {
   return (
-    <div style={{ padding: '20px', fontFamily: 'sans-serif' }}>
-      <h1>Welcome to Agentic Studio</h1>
-      <p>Use the chat on the left to tell me what you want to build.</p>
+    <div style={{ padding: '20px' }}>
+      <h1 style={{ fontFamily: 'sans-serif' }}>Welcome to Agentic Studio</h1>
+      <p style={{ fontFamily: 'sans-serif' }}>Use the chat on the left to tell me what you want to build.</p>
     </div>
   )
 }
@@ -63,6 +63,7 @@ const initialIndexJs = `
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";
+import "./styles.css";
 
 const root = createRoot(document.getElementById("root"));
 root.render(
@@ -71,6 +72,20 @@ root.render(
   </StrictMode>
 );
 `;
+
+const initialStylesCss = `
+body {
+  font-family: sans-serif;
+  -webkit-font-smoothing: auto;
+  -moz-osx-font-smoothing: auto;
+  -webkit-animation: bugfix infinite 1s;
+  margin: 0;
+}
+
+h1, h2, p {
+  font-family: sans-serif;
+}
+`
 
 const EDITOR_STORAGE_KEY = 'synapse-editor-code';
 
@@ -99,9 +114,9 @@ Tell me to "start the build" to begin the upgrade.` }
 
   const [codeFiles, setCodeFiles] = useState<{ [key: string]: string }>({
     '/src/App.jsx': initialCode,
-    '/src/styles.css': 'body { margin: 0; }',
+    '/src/styles.css': initialStylesCss,
     '/src/index.js': initialIndexJs,
-    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "react-scripts": "5.0.1" }, "main": "/src/index.js" }',
+    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0" }, "main": "/src/index.js" }',
   });
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -159,13 +174,12 @@ Passing the blueprint to the Coder.` }]);
               setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Coder Agent", message: "Generating file structure and code..." }]);
               try {
                 const result = await generateInitialApp({ prompt });
-                const newFileStructure = result.fileStructure;
                 const newCodeFilesArray = result.codeFiles;
 
-                if (!newFileStructure || !newCodeFilesArray || newCodeFilesArray.length === 0) {
-                  console.error("AI failed to generate file structure or code files.", result);
+                if (!newCodeFilesArray || newCodeFilesArray.length === 0) {
+                  console.error("AI failed to generate code files.", result);
                   setMessages(prev => [...prev, { sender: 'ai', text: "Sorry, an error occurred while building the application. The AI agents failed to generate the necessary files." }]);
-                  setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Error: AI generation failed. Missing file structure or code files." }]);
+                  setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Error: AI generation failed. Missing code files." }]);
                   return;
                 }
 
@@ -173,6 +187,19 @@ Passing the blueprint to the Coder.` }]);
                   acc[file.path] = file.content;
                   return acc;
                 }, {} as { [key: string]: string });
+
+                const newFileStructure: FileNode = {
+                  name: 'my-app',
+                  type: 'folder',
+                  path: '/',
+                  children: Object.keys(newCodeFiles).filter(path => path.startsWith('/src/')).map(path => ({
+                    name: path.replace('/src/', ''),
+                    type: 'file',
+                    path: path,
+                  })),
+                };
+                newFileStructure.children?.push({ name: 'package.json', type: 'file', path: '/package.json' });
+
 
                 setFileStructure(newFileStructure);
                 setCodeFiles(newCodeFiles);
@@ -204,22 +231,7 @@ Passing the blueprint to the Coder.` }]);
 
   const handleSendMessage = useCallback((text: string) => {
     setMessages(prev => [...prev, { sender: 'user', text }]);
-    const fullPrompt = `You are a coordinated team of AI agents tasked with generating a complete, production-ready upgrade of the AI Builder Studio application.
-Agents must collaborate sequentially, handing off results to the next role. Do not skip steps.
-
-PROJECT CONTEXT:
-- Application: AI Builder Studio
-- User Request: "${text}"
-- Upgrade goals:
-  • Modular React components with reusable UI blocks
-  • Drag & drop form builder with live preview
-  • Template library with tags, categories, and search
-  • Firestore versioning for templates and forms
-  • Diff view for history and rollback
-  • Role-based access control (RBAC) with granular permissions
-  • Audit logging for all critical actions
-  • Secure backend orchestration (Node.js/Express + Firebase Cloud Functions)`;
-    runAgentWorkflow(fullPrompt);
+    runAgentWorkflow(text);
   }, [runAgentWorkflow]);
 
   const handleCodeChange = useCallback((newCode: string) => {
@@ -240,11 +252,11 @@ PROJECT CONTEXT:
 
   return (
     <div className="bg-background text-foreground h-screen flex flex-col font-sans">
-      <header className="flex items-center justify-between h-14 px-4 border-b border-border flex-shrink-0 bg-card">
+      <header className="flex items-center justify-between h-16 px-6 border-b border-border flex-shrink-0 bg-card">
         <div className="flex items-center space-x-4">
-          <Bot size={24} className="text-primary" />
-          <h1 className="text-lg font-grotesk font-bold">Agentic Studio</h1>
-          <div className="flex items-center bg-muted px-3 py-1 rounded-md text-sm">
+          <Bot size={28} className="text-primary" />
+          <h1 className="text-xl font-grotesk font-bold">Agentic Studio</h1>
+          <div className="flex items-center bg-muted px-3 py-1.5 rounded-md text-sm">
             <GitBranch size={14} className="mr-2" />
             <span>main</span>
           </div>
@@ -274,7 +286,7 @@ PROJECT CONTEXT:
           <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground" onClick={() => setIsSettingsOpen(true)}>
             <Settings size={20} />
           </Button>
-          <Avatar>
+          <Avatar className="h-9 w-9">
             <AvatarFallback className="bg-primary text-primary-foreground font-bold text-sm">U</AvatarFallback>
           </Avatar>
         </div>
@@ -283,9 +295,9 @@ PROJECT CONTEXT:
       <main className="flex flex-1 overflow-hidden">
         <PanelGroup direction="horizontal">
           {/* Left Panel: Navigation & Agent Overview */}
-          <Panel defaultSize={20} minSize={15} className="min-w-[280px] bg-card border-r border-border flex flex-col">
+          <Panel defaultSize={20} minSize={15} className="min-w-[300px] bg-card border-r border-border flex flex-col">
             <div className="p-4 border-b border-border">
-              <h2 className="text-md font-grotesk font-semibold">Explorer</h2>
+              <h2 className="text-lg font-grotesk font-semibold">Explorer</h2>
             </div>
             <div className="flex-1 overflow-y-auto py-2">
               <FileTree node={fileStructure} onFileSelect={handleFileSelect} />
@@ -295,10 +307,10 @@ PROJECT CONTEXT:
             </div>
           </Panel>
           
-          <PanelResizeHandle className="w-1 bg-border/50 hover:bg-primary/50 transition-colors" />
+          <PanelResizeHandle className="w-1.5 bg-border/80 hover:bg-accent/50 transition-colors" />
 
           {/* Center Panel: Dynamic Workspace */}
-          <Panel defaultSize={40} minSize={30} className="flex flex-col border-r border-border">
+          <Panel defaultSize={45} minSize={30} className="flex flex-col border-r border-border">
             <div className="flex-shrink-0 border-b border-border bg-card">
               <div className="flex space-x-1 p-2">
                 <Button variant={centerView === 'chat' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('chat')}>
@@ -319,10 +331,10 @@ PROJECT CONTEXT:
             </div>
           </Panel>
 
-          <PanelResizeHandle className="w-1 bg-border/50 hover:bg-primary/50 transition-colors" />
+          <PanelResizeHandle className="w-1.5 bg-border/80 hover:bg-accent/50 transition-colors" />
 
           {/* Right Panel: Immediate Feedback */}
-          <Panel defaultSize={40} minSize={30} className="flex flex-col bg-muted/30">
+          <Panel defaultSize={35} minSize={30} className="flex flex-col bg-muted/30">
             <div className="flex-shrink-0 border-b border-border bg-card">
               <div className="flex space-x-1 p-2">
                 <Button variant={rightView === 'preview' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('preview')}>
@@ -343,8 +355,3 @@ PROJECT CONTEXT:
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </div>
   );
-
-    
-
-    
-

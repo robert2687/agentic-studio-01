@@ -17,18 +17,9 @@ const GenerateInitialAppInputSchema = z.object({
 });
 export type GenerateInitialAppInput = z.infer<typeof GenerateInitialAppInputSchema>;
 
-const FileNodeSchema: z.ZodType<any> = z.lazy(() => z.object({
-  name: z.string(),
-  type: z.enum(['folder', 'file']),
-  path: z.string(),
-  children: z.optional(z.array(FileNodeSchema)),
-}));
-
-
 const GenerateInitialAppOutputSchema = z.object({
-  fileStructure: FileNodeSchema.describe('The generated file structure as a JSON object. Each file should have a `path` property.'),
   codeFiles: z.array(z.object({
-    path: z.string().describe('The full path of the file.'),
+    path: z.string().describe('The full path of the file, starting with a forward slash (e.g., /src/App.jsx).'),
     content: z.string().describe('The complete, raw code for the file as a string.'),
   })).describe('An array of objects, where each object represents a file with its path and content.'),
 });
@@ -48,10 +39,11 @@ const prompt = ai.definePrompt({
   1.  Analyze the user's prompt to determine the application's requirements.
   2.  You MUST generate the following files:
       - \`/package.json\`
-      - \`/src/App.js\` (or .jsx)
+      - \`/src/App.js\` or \`/src/App.jsx\`
       - \`/src/index.js\`
       - \`/src/styles.css\`
   3.  **CRITICAL**: The \`package.json\` file MUST only include \`react\` and \`react-dom\` as dependencies. Do NOT include \`react-scripts\`.
+      The 'main' entry point must be '/src/index.js'.
       Example package.json:
       \`\`\`json
       {
@@ -63,32 +55,11 @@ const prompt = ai.definePrompt({
         "main": "/src/index.js"
       }
       \`\`\`
-  4.  The \`src/index.js\` file must be the entry point and render the \`App\` component.
-  5.  Generate the code for each file. The code should be simple, functional, and directly related to the user's prompt.
+  4.  The \`src/index.js\` file must be the entry point and render the \`App\` component into the DOM.
+  5.  Generate simple, functional code for each file that directly relates to the user's prompt.
   6.  **DO NOT** use any third-party libraries other than \`react\` and \`react-dom\`. The Sandpack environment does not support installing other packages. All code must be self-contained.
-  7.  **VERY IMPORTANT**: You will return a single JSON object containing two fields: \`fileStructure\` and \`codeFiles\`.
-      - \`fileStructure\`: A JSON object representing the file tree. It must match the files you generate.
+  7.  **VERY IMPORTANT**: You will return a single JSON object containing one field: \`codeFiles\`.
       - \`codeFiles\`: An array of objects. Each object must have a \`path\` and a \`content\` property.
-
-  Example \`fileStructure\` JSON object:
-  {
-    "name": "my-app",
-    "type": "folder",
-    "path": "/",
-    "children": [
-      {
-        "name": "src",
-        "type": "folder",
-        "path": "/src",
-        "children": [
-          { "name": "App.jsx", "type": "file", "path": "/src/App.jsx" },
-          { "name": "index.js", "type": "file", "path": "/src/index.js" },
-          { "name": "styles.css", "type": "file", "path": "/src/styles.css" }
-        ]
-      },
-      { "name": "package.json", "type": "file", "path": "/package.json" }
-    ]
-  }
 
   User Prompt: {{{prompt}}}
 `,
