@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, ArrowUp, Download, Send, Bell, Settings, Save } from 'lucide-react';
+import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, ArrowUp, Download, Send, Bell, Settings, Save, Expand, Minimize } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -120,6 +120,7 @@ Tell me to "start the build" to begin the upgrade.` }
   });
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isZenMode, setIsZenMode] = useState(false);
 
   const { toast } = useToast();
 
@@ -295,53 +296,65 @@ Passing the blueprint to the Coder.` }]);
       <main className="flex flex-1 overflow-hidden">
         <PanelGroup direction="horizontal">
           {/* Left Panel: Navigation & Agent Overview */}
-          <Panel defaultSize={20} minSize={15} className="min-w-[300px] bg-card border-r border-border flex flex-col">
-            <div className="p-4 border-b border-border">
-              <h2 className="text-lg font-grotesk font-semibold">Explorer</h2>
-            </div>
-            <div className="flex-1 overflow-y-auto py-2">
-              <FileTree node={fileStructure} onFileSelect={handleFileSelect} />
-            </div>
-            <div className="border-t border-border flex-shrink-0">
-              <AgentStatus agents={agents} />
-            </div>
-          </Panel>
+          {!isZenMode && (
+            <>
+              <Panel defaultSize={20} minSize={15} className="min-w-[300px] bg-card border-r border-border flex flex-col">
+                <div className="p-4 border-b border-border">
+                  <h2 className="text-lg font-grotesk font-semibold">Explorer</h2>
+                </div>
+                <div className="flex-1 overflow-y-auto py-2">
+                  <FileTree node={fileStructure} onFileSelect={handleFileSelect} />
+                </div>
+                <div className="border-t border-border flex-shrink-0">
+                  <AgentStatus agents={agents} />
+                </div>
+              </Panel>
+              <PanelResizeHandle className="w-1.5 bg-border/80 hover:bg-accent/50 transition-colors" />
+            </>
+          )}
           
-          <PanelResizeHandle className="w-1.5 bg-border/80 hover:bg-accent/50 transition-colors" />
-
           {/* Center Panel: Dynamic Workspace */}
-          <Panel defaultSize={45} minSize={30} className="flex flex-col border-r border-border">
-            <div className="flex-shrink-0 border-b border-border bg-card">
-              <div className="flex space-x-1 p-2">
-                <Button variant={centerView === 'chat' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('chat')}>
-                  <Bot size={16} className="mr-2" /> Chat
-                </Button>
-                <Button variant={centerView === 'code' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('code')}>
-                  <Code size={16} className="mr-2" /> Code
-                </Button>
-                <Button variant={centerView === 'canvas' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('canvas')}>
-                  <LayoutTemplate size={16} className="mr-2" /> Canvas
-                </Button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-hidden bg-background">
-              {centerView === 'chat' && <ChatView messages={messages} onSendMessage={handleSendMessage} />}
-              {centerView === 'code' && <CodeEditorView files={codeFiles} activeFile={activeCodeFile} onCodeChange={handleCodeChange} code={code} />}
-              {centerView === 'canvas' && <CanvasView />}
-            </div>
-          </Panel>
-
-          <PanelResizeHandle className="w-1.5 bg-border/80 hover:bg-accent/50 transition-colors" />
+          {!isZenMode && (
+            <>
+              <Panel defaultSize={45} minSize={30} className="flex flex-col border-r border-border">
+                <div className="flex-shrink-0 border-b border-border bg-card">
+                  <div className="flex space-x-1 p-2">
+                    <Button variant={centerView === 'chat' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('chat')}>
+                      <Bot size={16} className="mr-2" /> Chat
+                    </Button>
+                    <Button variant={centerView === 'code' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('code')}>
+                      <Code size={16} className="mr-2" /> Code
+                    </Button>
+                    <Button variant={centerView === 'canvas' ? 'secondary' : 'ghost'} size="sm" onClick={() => setCenterView('canvas')}>
+                      <LayoutTemplate size={16} className="mr-2" /> Canvas
+                    </Button>
+                  </div>
+                </div>
+                <div className="flex-1 overflow-hidden bg-background">
+                  {centerView === 'chat' && <ChatView messages={messages} onSendMessage={handleSendMessage} />}
+                  {centerView === 'code' && <CodeEditorView files={codeFiles} activeFile={activeCodeFile} onCodeChange={handleCodeChange} code={code} />}
+                  {centerView === 'canvas' && <CanvasView />}
+                </div>
+              </Panel>
+              <PanelResizeHandle className="w-1.5 bg-border/80 hover:bg-accent/50 transition-colors" />
+            </>
+          )}
 
           {/* Right Panel: Immediate Feedback */}
-          <Panel defaultSize={35} minSize={30} className="flex flex-col bg-muted/30">
+          <Panel defaultSize={isZenMode ? 100 : 35} minSize={30} className="flex flex-col bg-muted/30">
             <div className="flex-shrink-0 border-b border-border bg-card">
-              <div className="flex space-x-1 p-2">
-                <Button variant={rightView === 'preview' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('preview')}>
-                   <Play size={16} className="mr-2" /> Live Preview
-                </Button>
-                <Button variant={rightView === 'logs' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('logs')}>
-                  <Terminal size={16} className="mr-2" /> Logs
+              <div className="flex justify-between items-center p-2">
+                <div className="flex space-x-1">
+                  <Button variant={rightView === 'preview' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('preview')}>
+                    <Play size={16} className="mr-2" /> Live Preview
+                  </Button>
+                  <Button variant={rightView === 'logs' ? 'secondary' : 'ghost'} size="sm" onClick={() => setRightView('logs')}>
+                    <Terminal size={16} className="mr-2" /> Logs
+                  </Button>
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setIsZenMode(!isZenMode)}>
+                  {isZenMode ? <Minimize size={16} className="mr-2" /> : <Expand size={16} className="mr-2" />}
+                  {isZenMode ? 'Exit Zen Mode' : 'Zen Mode'}
                 </Button>
               </div>
             </div>
@@ -355,3 +368,4 @@ Passing the blueprint to the Coder.` }]);
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </div>
   );
+}
