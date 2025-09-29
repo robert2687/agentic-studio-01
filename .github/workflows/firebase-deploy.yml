@@ -1,4 +1,3 @@
-
 name: Firebase CI/CD
 
 on:
@@ -30,10 +29,29 @@ jobs:
       - run: npm run lint --if-present
       - run: npm test --if-present
 
-  # --- Deploy job depends on tests ---
+  # --- Build job depends on tests ---
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    name: Build (Node.js ${{ matrix.node-version }})
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run build --if-present
+
+  # --- Deploy job depends on build ---
   deploy:
     if: github.event_name == 'push'
-    needs: test
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -52,14 +70,14 @@ jobs:
 
       - name: Deploy Firestore rules, indexes, functions, and Hosting live
         run: |
-          firebase deploy --only firestore:rules,firestore:indexes,functions,hosting --project ${{ secrets.FIREBASE_PROJECT_ID }}
+          firebase deploy --only firestore:rules,firestore:indexes,functions,hosting:live --project ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
 
-  # --- Preview job also depends on tests ---
+  # --- Preview job also depends on build ---
   preview:
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
-    needs: test
+    needs: build
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -74,7 +92,6 @@ jobs:
           cache: 'npm'
 
       - run: npm ci
-      - run: npm run build
       - run: npm install -g firebase-tools
 
       - name: Deploy to Hosting Preview Channel
@@ -85,7 +102,6 @@ jobs:
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: "${{ secrets.FIREBASE_PROJECT_ID }}"
           channelId: pr-${{ github.event.pull_request.number }}-node${{ matrix.node-version }}
-          target: agentic-studio
 
       - name: Comment PR with Preview URL
         uses: marocchino/sticky-pull-request-comment@v2
