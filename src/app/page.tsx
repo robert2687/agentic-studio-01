@@ -38,11 +38,11 @@ const initialFileStructure: FileNode = {
 };
 
 const initialAgents: Agent[] = [
-  { id: 1, name: 'Planner Agent', status: 'Idle', progress: 0 },
-  { id: 2, name: 'Architect Agent', status: 'Idle', progress: 0 },
-  { id: 3, name: 'Coder Agent', status: 'Idle', progress: 0 },
-  { id: 4, name: 'Reviewer Agent', status: 'Idle', progress: 0 },
-  { id: 5, name: 'Deployer Agent', status: 'Idle', progress: 0 },
+    { id: 1, name: 'Planner Agent', status: 'Idle', progress: 0 },
+    { id: 2, name: 'Architect Agent', status: 'Idle', progress: 0 },
+    { id: 3, name: 'Coder Agent', status: 'Idle', progress: 0 },
+    { id: 4, name: 'Reviewer Agent', status: 'Idle', progress: 0 },
+    { id: 5, name: 'Deployer Agent', status: 'Idle', progress: 0 },
 ];
 
 const initialCode = `
@@ -150,7 +150,11 @@ Tell me to "start the build" to begin the upgrade.` }
     agentRunner("Planner Agent", 1500, () => {
         setMessages(prev => [...prev, { sender: 'ai', text: 'The **Planner Agent** has defined the upgraded features, user personas, and workflows in a structured requirements document. Handing off to the Architect.' }]);
         agentRunner("Architect Agent", 2000, () => {
-            setMessages(prev => [...prev, { sender: 'ai', text: 'The **Architect Agent** has designed the modular architecture, versioned Firestore schema, and RBAC model. Passing the blueprint to the Coder.' }]);
+            setMessages(prev => [...prev, { sender: 'ai', text: `The **Architect Agent** has designed the system architecture and Firestore data model.
+<br/><br/>
+The schema includes collections for multi-tenancy (\`organizations\`, \`projects\`), versioned content (\`templates\`, \`versions\`), and security (\`roles\`, \`auditLogs\`). This ensures a scalable and secure foundation.
+<br/><br/>
+Passing the blueprint to the Coder.` }]);
             agentRunner("Coder Agent", 4000, async () => {
               setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Coder Agent", message: "Generating file structure and code..." }]);
               try {
@@ -199,7 +203,21 @@ Tell me to "start the build" to begin the upgrade.` }
 
   const handleSendMessage = useCallback((text: string) => {
     setMessages(prev => [...prev, { sender: 'user', text }]);
-    const fullPrompt = `Generate a production-ready upgrade for the AI Builder Studio. The user initiated with: "${text}". The upgrade goals are: modular React components with a drag-and-drop form builder, a template library with search, Firestore versioning with a diff view, RBAC with granular permissions, and audit logging. The backend should be a secure Node.js/Express app using Firebase Cloud Functions.`;
+    const fullPrompt = `You are a coordinated team of AI agents tasked with generating a complete, production-ready upgrade of the AI Builder Studio application.
+Agents must collaborate sequentially, handing off results to the next role. Do not skip steps.
+
+PROJECT CONTEXT:
+- Application: AI Builder Studio
+- User Request: "${text}"
+- Upgrade goals:
+  • Modular React components with reusable UI blocks
+  • Drag & drop form builder with live preview
+  • Template library with tags, categories, and search
+  • Firestore versioning for templates and forms
+  • Diff view for history and rollback
+  • Role-based access control (RBAC) with granular permissions
+  • Audit logging for all critical actions
+  • Secure backend orchestration (Node.js/Express + Firebase Cloud Functions)`;
     runAgentWorkflow(fullPrompt);
   }, [runAgentWorkflow]);
 
@@ -324,5 +342,7 @@ Tell me to "start the build" to begin the upgrade.` }
       <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
     </div>
   );
+
+    
 
     
