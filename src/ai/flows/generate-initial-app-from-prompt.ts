@@ -42,16 +42,32 @@ const prompt = ai.definePrompt({
   name: 'generateInitialAppPrompt',
   input: {schema: GenerateInitialAppInputSchema},
   output: {schema: GenerateInitialAppOutputSchema},
-  prompt: `You are an expert full-stack developer tasked with generating the initial file structure and code for a simple React application based on a user's prompt. The output should be compatible with Sandpack (a browser-based bundler).
+  prompt: `You are an expert full-stack developer tasked with generating the initial files for a simple React application based on a user's prompt. The output must be compatible with Sandpack's "react" template.
 
   Instructions:
   1.  Analyze the user's prompt to determine the application's requirements.
-  2.  Create a file structure for a simple React app that fulfills the prompt. It must include \`package.json\`, a root file like \`src/App.jsx\`, and an entry point like \`src/index.js\`.
-  3.  **CRITICAL**: The \`package.json\` file MUST include \`react\`, \`react-dom\`, and \`react-scripts\` as dependencies. This is required for the application to run. Use recent but stable versions.
-  4.  Generate the code for each file. The code should be simple, functional, and directly related to the user's prompt.
-  5.  **DO NOT** use any third-party libraries other than \`react\` and \`react-dom\`. The Sandpack environment does not support installing other packages. All code must be self-contained.
-  6.  **VERY IMPORTANT**: You will return a single JSON object containing two fields: \`fileStructure\` and \`codeFiles\`.
-      - \`fileStructure\`: A JSON object representing the file tree.
+  2.  You MUST generate the following files:
+      - \`/package.json\`
+      - \`/src/App.js\` (or .jsx)
+      - \`/src/index.js\`
+      - \`/src/styles.css\`
+  3.  **CRITICAL**: The \`package.json\` file MUST only include \`react\` and \`react-dom\` as dependencies. Do NOT include \`react-scripts\`.
+      Example package.json:
+      \`\`\`json
+      {
+        "name": "react-app",
+        "dependencies": {
+          "react": "18.2.0",
+          "react-dom": "18.2.0"
+        },
+        "main": "/src/index.js"
+      }
+      \`\`\`
+  4.  The \`src/index.js\` file must be the entry point and render the \`App\` component.
+  5.  Generate the code for each file. The code should be simple, functional, and directly related to the user's prompt.
+  6.  **DO NOT** use any third-party libraries other than \`react\` and \`react-dom\`. The Sandpack environment does not support installing other packages. All code must be self-contained.
+  7.  **VERY IMPORTANT**: You will return a single JSON object containing two fields: \`fileStructure\` and \`codeFiles\`.
+      - \`fileStructure\`: A JSON object representing the file tree. It must match the files you generate.
       - \`codeFiles\`: An array of objects. Each object must have a \`path\` and a \`content\` property.
 
   Example \`fileStructure\` JSON object:
@@ -73,26 +89,6 @@ const prompt = ai.definePrompt({
       { "name": "package.json", "type": "file", "path": "/package.json" }
     ]
   }
-
-  Example \`codeFiles\` array:
-  [
-    {
-      "path": "/package.json",
-      "content": "{\\"name\\": \\"react-app\\",\\"dependencies\\": {\\"react\\": \\"18.2.0\\",\\"react-dom\\": \\"18.2.0\\",\\"react-scripts\\": \\"5.0.1\\"}}"
-    },
-    {
-      "path": "/src/App.jsx",
-      "content": "import React from 'react';\\nimport './styles.css';\\n\\nexport default function App() {\\n  return <h1>Hello from my App!</h1>;\\n}"
-    },
-    {
-      "path": "/src/index.js",
-      "content": "import React from 'react';\\nimport { createRoot } from 'react-dom/client';\\nimport App from './App';\\n\\nconst root = createRoot(document.getElementById('root'));\\nroot.render(<App />);"
-    },
-    {
-      "path": "/src/styles.css",
-      "content": "body { font-family: sans-serif; }"
-    }
-  ]
 
   User Prompt: {{{prompt}}}
 `,
