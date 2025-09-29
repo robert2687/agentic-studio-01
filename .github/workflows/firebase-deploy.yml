@@ -54,7 +54,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
-
+      
       - name: Download test logs
         uses: actions/download-artifact@v4
         with:
@@ -108,6 +108,19 @@ jobs:
         with:
           name: all-logs-combined
           pattern: all-logs-node*
+          retention-days: 7
+
+  # --- Merge build outputs from Node.js 18 + 20 ---
+  merge-builds:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Merge all build outputs into one artifact
+    steps:
+      - name: Merge build-output artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: build-output-combined
+          pattern: build-output-node*
           retention-days: 7
 
   # --- Deploy job depends on build ---
