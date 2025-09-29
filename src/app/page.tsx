@@ -80,7 +80,17 @@ export default function AgenticStudioPage() {
   const [centerView, setCenterView] = useState('chat');
   const [rightView, setRightView] = useState('preview');
   const [messages, setMessages] = useState<Message[]>([
-    { sender: 'ai', text: 'Welcome to **Agentic Studio**! I am your AI project manager. Tell me what you would like to build.' }
+    { sender: 'ai', text: `Welcome to **Agentic Studio**. I am your AI project manager.
+<br/><br/>
+My team of agents is ready to build a new **AI Builder Studio** with the following features based on our production-ready protocol:
+- Drag-and-drop form builder
+- Template library with tags/categories
+- Firestore versioning for templates
+- Role-Based Access Control (RBAC)
+- Audit logging for all actions
+- Diff views for template changes
+<br/><br/>
+Tell me to "start the build" to begin.` }
   ]);
   const [logs, setLogs] = useState<Log[]>([]);
   const [activeCodeFile, setActiveCodeFile] = useState('/src/App.jsx');
@@ -136,9 +146,9 @@ export default function AgenticStudioPage() {
     };
 
     agentRunner("Planner Agent", 1500, () => {
-        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Planner Agent** has defined the features, user flows, and tech stack. Handing off to the Architect.' }]);
+        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Planner Agent** has defined the features, user flows, and tech stack in a structured requirements document. Handing off to the Architect.' }]);
         agentRunner("Architect Agent", 2000, () => {
-            setMessages(prev => [...prev, { sender: 'ai', text: 'The **Architect Agent** has designed the system architecture and data models. Passing the blueprint to the Coder.' }]);
+            setMessages(prev => [...prev, { sender: 'ai', text: 'The **Architect Agent** has designed the system architecture, database schema, and API contracts. Passing the blueprint to the Coder.' }]);
             agentRunner("Coder Agent", 4000, async () => {
               setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Coder Agent", message: "Generating file structure and code..." }]);
               try {
@@ -165,12 +175,12 @@ export default function AgenticStudioPage() {
                 setCode(newCodeFiles[mainFile] || initialCode);
                 setActiveCodeFile(mainFile);
 
-                setMessages(prev => [...prev, { sender: 'ai', text: 'The **Coder Agent** has implemented the application code. Submitting for review.' }]);
+                setMessages(prev => [...prev, { sender: 'ai', text: 'The **Coder Agent** has implemented the production-grade code. Submitting for review.' }]);
 
                 agentRunner("Reviewer Agent", 2500, () => {
-                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the code for quality, security, and best practices. Code approved. Handing off for deployment instructions.' }]);
+                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the code for scalability, security, and best practices. Code approved. Handing off for deployment.' }]);
                     agentRunner("Deployer Agent", 1500, () => {
-                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided deployment instructions. The application is ready and can be seen in the live preview.' }]);
+                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided a step-by-step deployment guide. The application is ready and can be seen in the live preview.' }]);
                         setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow complete. All agents finished." }]);
                     });
                 });
@@ -187,7 +197,8 @@ export default function AgenticStudioPage() {
 
   const handleSendMessage = useCallback((text: string) => {
     setMessages(prev => [...prev, { sender: 'user', text }]);
-    runAgentWorkflow(text);
+    const fullPrompt = `Build an "AI Builder Studio" with the following features: drag-and-drop form builder, template library with tags/categories, Firestore versioning for templates, Role-Based Access Control (RBAC), audit logging for all actions, and diff views for template changes. The user initiated with: "${text}"`;
+    runAgentWorkflow(fullPrompt);
   }, [runAgentWorkflow]);
 
   const handleCodeChange = useCallback((newCode: string) => {

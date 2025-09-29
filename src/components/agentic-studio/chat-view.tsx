@@ -76,7 +76,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages, onSendMessage }) =
                             handleSend();
                           }
                         }}
-                        placeholder="Enter an instruction for the orchestrator... (e.g., 'Create a login page')"
+                        placeholder="Type 'start the build' to begin..."
                         className="w-full bg-muted text-foreground placeholder-muted-foreground rounded-lg py-3 pl-4 pr-12 focus-visible:ring-1 focus-visible:ring-ring resize-none"
                         rows={1}
                     />
