@@ -17,6 +17,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from '@/hooks/use-auto-save';
 import { SettingsDialog } from '@/components/agentic-studio/settings-dialog';
 import { generateInitialApp } from '@/ai/flows/generate-initial-app-from-prompt';
+import { generateCodeFromPrompt } from '@/ai/flows/generate-code-from-prompt';
 
 const initialFileStructure: FileNode = {
   name: 'my-app',
@@ -104,7 +105,7 @@ My team of agents is ready to generate a production-ready upgrade for the **AI B
 - Role-Based Access Control (RBAC) and audit logging
 - A secure Node.js/Express backend with CI/CD
 <br/><br/>
-Tell me to "start the build" to begin the upgrade.` }
+Tell me to "start the build" to begin the upgrade, or ask me to "generate code for..." a specific component.` }
   ]);
   const [logs, setLogs] = useState<Log[]>([]);
   const [activeCodeFile, setActiveCodeFile] = useState('/src/page.tsx');
@@ -284,6 +285,21 @@ Tell me to "start the build" to begin the upgrade.` }
 
   }, []);
 
+  const handleGenerateCode = useCallback(async (prompt: string) => {
+    setMessages(prev => [...prev, { sender: 'ai', text: `Sure, I can help with that. Generating a code snippet for: "${prompt}"` }]);
+    setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `Code snippet generation requested: '${prompt}'.` }]);
+    
+    try {
+      const result = await generateCodeFromPrompt({ prompt });
+      const { code } = result;
+      const formattedCode = 'Here is the generated code snippet:\n```tsx\n' + code + '\n```';
+      setMessages(prev => [...prev, { sender: 'ai', text: formattedCode }]);
+    } catch(error) {
+      const errorMessage = (error as Error).message || 'An unknown error occurred.';
+      setMessages(prev => [...prev, { sender: 'ai', text: `Sorry, I was unable to generate the code snippet. ${errorMessage}` }]);
+      setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `Code snippet generation failed: ${errorMessage}` }]);
+    }
+  }, []);
 
   const handleRetryTask = (taskId: number) => {
     const taskToRetry = agents.find(a => a.id === taskId);
@@ -346,12 +362,17 @@ Tell me to "start the build" to begin the upgrade.` }
 
   const handleSendMessage = useCallback((text: string) => {
     setMessages(prev => [...prev, { sender: 'user', text }]);
-    if (text.toLowerCase().includes("start the build")) {
+    const lowerCaseText = text.toLowerCase();
+    
+    if (lowerCaseText.includes("start the build")) {
       runAgentWorkflow("Upgrade the AI Builder Studio with a drag-and-drop form builder, template library, Firestore versioning, RBAC, and a secure backend.");
+    } else if (lowerCaseText.startsWith("generate code for")) {
+        const prompt = text.substring("generate code for".length).trim();
+        handleGenerateCode(prompt);
     } else {
       runAgentWorkflow(text);
     }
-  }, [runAgentWorkflow]);
+  }, [runAgentWorkflow, handleGenerateCode]);
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
