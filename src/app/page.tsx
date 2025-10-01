@@ -164,6 +164,7 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
     setAgents(currentAgents);
     setMessages(prev => [...prev, { sender: 'ai', text: `Okay, I will scaffold an application based on your request: "${prompt}". I am engaging my team of AI agents to fulfill your request. You can see their status on the left.` }]);
     setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `User request received: '${prompt}'. Engaging agent team.` }]);
+    setCenterView('chat');
 
     const runTask = async (task: Agent) => {
       setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Working', progress: 0 } : a));
@@ -479,7 +480,7 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
                 <div className="flex-1 overflow-hidden bg-background">
                   {centerView === 'chat' && <ChatView messages={messages} onSendMessage={handleSendMessage} />}
                   {centerView === 'code' && <CodeEditorView files={codeFiles} activeFile={activeCodeFile} onCodeChange={handleCodeChange} code={code} />}
-                  {centerView === 'canvas' && <CanvasView />}
+                  {centerView === 'canvas' && <CanvasView onGenerate={runAgentWorkflow} />}
                 </div>
               </Panel>
               <PanelResizeHandle className="w-1.5 bg-border/80 hover:bg-accent/50 transition-colors" />
