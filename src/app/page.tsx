@@ -152,7 +152,8 @@ Tell me to "start the build" to begin the upgrade.` }
   };
 
   const runAgentWorkflow = useCallback(async (prompt: string) => {
-    setAgents(initialAgents.map(a => ({ ...a, status: 'Idle', progress: 0 })));
+    let currentAgents = initialAgents.map(a => ({ ...a, status: 'Idle', progress: 0 }));
+    setAgents(currentAgents);
     setMessages(prev => [...prev, { sender: 'ai', text: `Okay, I will scaffold an application based on your request: "${prompt}". I am engaging my team of AI agents to fulfill your request. You can see their status on the left.` }]);
     setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `User request received: '${prompt}'. Engaging agent team.` }]);
 
@@ -185,37 +186,27 @@ Tell me to "start the build" to begin the upgrade.` }
           };
           const srcFolder: FileNode = { name: 'src', type: 'folder', path: '/src', children: [] };
           
-          const pathMap: { [key: string]: FileNode } = { '/': newFileStructure, '/src': srcFolder };
-          newFileStructure.children!.push(srcFolder);
-
+          const pathMap: { [key: string]: FileNode } = { '/': newFileStructure };
+          
           newCodeFilesArray.forEach(file => {
             const parts = file.path.split('/').filter(p => p);
             let currentPath = '';
-            for (let i = 0; i < parts.length - 1; i++) {
-              const part = parts[i];
-              const parentPath = currentPath;
-              currentPath += `/${part}`;
-              if (!pathMap[currentPath]) {
-                const newFolder: FileNode = { name: part, type: 'folder', path: currentPath, children: [] };
-                pathMap[parentPath].children!.push(newFolder);
-                pathMap[currentPath] = newFolder;
-              }
-            }
-            const fileName = parts[parts.length - 1];
-            const parentPath = parts.length > 1 ? `/${parts.slice(0, -1).join('/')}` : '/';
-            pathMap[parentPath].children!.push({ name: fileName, type: 'file', path: file.path });
-          });
-          
-          Object.keys(newCodeFiles).forEach(path => {
-              if (!path.startsWith('/src/')) {
-                  newFileStructure.children?.push({
-                      name: path.slice(1),
-                      type: 'file',
-                      path: path,
-                  });
-              }
-          });
+            let parentNode = newFileStructure;
 
+            for (let i = 0; i < parts.length - 1; i++) {
+                currentPath += `/${parts[i]}`;
+                let folderNode = parentNode.children?.find(child => child.name === parts[i] && child.type === 'folder');
+                if (!folderNode) {
+                    folderNode = { name: parts[i], type: 'folder', path: currentPath, children: [] };
+                    if (!parentNode.children) parentNode.children = [];
+                    parentNode.children.push(folderNode);
+                }
+                parentNode = folderNode;
+            }
+            
+            if (!parentNode.children) parentNode.children = [];
+            parentNode.children.push({ name: parts[parts.length - 1], type: 'file', path: file.path });
+          });
 
           setFileStructure(newFileStructure);
           setCodeFiles(newCodeFiles);
@@ -229,62 +220,68 @@ Tell me to "start the build" to begin the upgrade.` }
         }
 
         clearInterval(progressInterval);
-        setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Done', progress: 100 } : a));
+        setAgents(prev => {
+            currentAgents = prev.map(a => a.id === task.id ? { ...a, status: 'Done', progress: 100 } : a);
+            return currentAgents;
+        });
         setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: "Task completed successfully." }]);
         setMessages(prev => [...prev, { sender: 'ai', text: `The **${task.name}** has completed its task.` }]);
         return true;
       } catch (error) {
         clearInterval(progressInterval);
         const errorMessage = (error as Error).message || 'An unknown error occurred.';
-        setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Failed', progress: a.progress } : a));
+        setAgents(prev => {
+            currentAgents = prev.map(a => a.id === task.id ? { ...a, status: 'Failed', progress: a.progress } : a);
+            return currentAgents;
+        });
         setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: `Task failed: ${errorMessage}` }]);
         setMessages(prev => [...prev, { sender: 'ai', text: `The **${task.name}** has failed: ${errorMessage}` }]);
         return false;
       }
     };
 
-    const processQueue = async (agentQueue: Agent[]) => {
-      for (const task of agentQueue) {
-        if (!canRunTask(task, agents)) {
-          setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Blocked' } : a));
-          setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: "Task blocked due to dependency failure." }]);
-          continue;
-        }
-
-        const success = await runTask(task);
-        if (!success) {
-          // Mark dependent tasks as blocked
-          setAgents(currentAgents => {
-            const queue = [...currentAgents];
-            for (const a of queue) {
-              if (a.dependencies?.includes(task.id)) {
-                const dependentIndex = queue.findIndex(agent => agent.id === a.id);
-                if (dependentIndex !== -1) {
-                  queue[dependentIndex] = { ...queue[dependentIndex], status: 'Blocked' };
-                  setLogs(prevLogs => [...prevLogs, { timestamp: new Date().toLocaleTimeString(), agent: a.name, message: `Task blocked because dependency '${task.name}' failed.` }]);
+    const processQueue = async () => {
+        let queue = [...initialAgents];
+        while(queue.some(a => a.status === 'Idle' || a.status === 'Working')) {
+            const runnableTask = queue.find(task => task.status === 'Idle' && canRunTask(task, currentAgents));
+            
+            if (runnableTask) {
+                const success = await runTask(runnableTask);
+                if (!success) {
+                    setAgents(prev => {
+                       let agentsToUpdate = [...prev];
+                       let failedTaskId = runnableTask.id;
+                       
+                       let tasksToBlock = agentsToUpdate.filter(a => a.dependencies?.includes(failedTaskId));
+                       while (tasksToBlock.length > 0) {
+                           const newTasksToBlock: Agent[] = [];
+                           tasksToBlock.forEach(blockingTask => {
+                               agentsToUpdate = agentsToUpdate.map(a => a.id === blockingTask.id ? { ...a, status: 'Blocked' } : a);
+                               setLogs(prevLogs => [...prevLogs, { timestamp: new Date().toLocaleTimeString(), agent: blockingTask.name, message: `Task blocked because dependency '${agentsToUpdate.find(dep => dep.id === failedTaskId)?.name}' failed.` }]);
+                               const nextDependents = agentsToUpdate.filter(a => a.dependencies?.includes(blockingTask.id));
+                               newTasksToBlock.push(...nextDependents);
+                           });
+                           tasksToBlock = newTasksToBlock;
+                       }
+                       return agentsToUpdate;
+                    });
+                    break; // Stop processing queue on failure
                 }
-              }
+            } else if (queue.some(a => a.status === 'Working')) {
+                // Wait for tasks to complete
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } else {
+                // No runnable tasks and nothing is working, must be a deadlock or all done
+                break;
             }
-            return queue;
-          });
-          break; // Stop processing queue on failure
+            queue = queue.filter(a => a.id !== runnableTask?.id);
         }
-         // Update agents state for the next canRunTask check
-        setAgents(currentAgents => {
-            const updatedAgents = [...currentAgents];
-            const taskIndex = updatedAgents.findIndex(a => a.id === task.id);
-            if (taskIndex !== -1) {
-                updatedAgents[taskIndex] = { ...updatedAgents[taskIndex], status: 'Done', progress: 100 };
-            }
-            return updatedAgents;
-        });
-      }
     };
     
-    await processQueue(initialAgents);
+    await processQueue();
     setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow finished." }]);
 
-  }, [agents]);
+  }, []);
 
 
   const handleRetryTask = (taskId: number) => {
@@ -318,7 +315,14 @@ Tell me to "start the build" to begin the upgrade.` }
             // Unblock dependent tasks
             newAgents = newAgents.map(a => {
                 if(a.dependencies?.includes(task.id) && a.status === 'Blocked') {
-                    return {...a, status: 'Idle'}
+                    // Only unblock if all dependencies are now met
+                    const depsMet = a.dependencies.every(depId => {
+                       const dep = newAgents.find(agent => agent.id === depId);
+                       return dep && dep.status === 'Done';
+                    });
+                    if (depsMet) {
+                      return {...a, status: 'Idle'}
+                    }
                 }
                 return a;
             })
@@ -467,9 +471,9 @@ Tell me to "start the build" to begin the upgrade.` }
                 </Button>
               </div>
             </div>
-            <div className="flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden p-4">
               {rightView === 'preview' && <SandpackPreviewComponent files={codeFiles} />}
-              {rightView === 'logs' && <div className="p-4"><LogsView logs={logs} /></div>}
+              {rightView === 'logs' && <LogsView logs={logs} />}
             </div>
           </Panel>
         </PanelGroup>
@@ -478,5 +482,3 @@ Tell me to "start the build" to begin the upgrade.` }
     </div>
   );
 }
-
-    
