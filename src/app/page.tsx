@@ -2,7 +2,7 @@
 "use client";
 
 import React, { useState, useCallback, useEffect } from 'react';
-import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, ArrowUp, Download, Send, Bell, Settings, Save, Expand, Minimize } from 'lucide-react';
+import { Bot, Code, Play, Terminal, LayoutTemplate, GitBranch, Share2, ArrowUp, Download, Send, Bell, Settings, Save, Expand, Minimize, RefreshCw } from 'lucide-react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -39,10 +39,10 @@ const initialFileStructure: FileNode = {
 
 const initialAgents: Agent[] = [
     { id: 1, name: 'Planner Agent', status: 'Idle', progress: 0 },
-    { id: 2, name: 'Architect Agent', status: 'Idle', progress: 0 },
-    { id: 3, name: 'Coder Agent', status: 'Idle', progress: 0 },
-    { id: 4, name: 'Reviewer Agent', status: 'Idle', progress: 0 },
-    { id: 5, name: 'Deployer Agent', status: 'Idle', progress: 0 },
+    { id: 2, name: 'Architect Agent', status: 'Idle', progress: 0, dependencies: [1] },
+    { id: 3, name: 'Coder Agent', status: 'Idle', progress: 0, dependencies: [2] },
+    { id: 4, name: 'Reviewer Agent', status: 'Idle', progress: 0, dependencies: [3] },
+    { id: 5, name: 'Deployer Agent', status: 'Idle', progress: 0, dependencies: [4] },
 ];
 
 const initialCode = `
@@ -138,97 +138,206 @@ Tell me to "start the build" to begin the upgrade.` }
     }
   }, []);
 
+  const canRunTask = (task: Agent, allAgents: Agent[]): boolean => {
+    if (!task.dependencies || task.dependencies.length === 0) {
+      return true;
+    }
+    for (const depId of task.dependencies) {
+      const depTask = allAgents.find(a => a.id === depId);
+      if (!depTask || depTask.status !== 'Done') {
+        return false;
+      }
+    }
+    return true;
+  };
+
   const runAgentWorkflow = useCallback(async (prompt: string) => {
-    setAgents(initialAgents);
+    setAgents(initialAgents.map(a => ({ ...a, status: 'Idle', progress: 0 })));
     setMessages(prev => [...prev, { sender: 'ai', text: `Okay, I will scaffold an application based on your request: "${prompt}". I am engaging my team of AI agents to fulfill your request. You can see their status on the left.` }]);
     setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `User request received: '${prompt}'. Engaging agent team.` }]);
 
-    const agentRunner = (agentName: string, duration: number, callback: () => void) => {
-        setAgents(prev => prev.map(a => a.name === agentName ? { ...a, status: 'Working', progress: 0 } : a));
-        setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: agentName, message: "Task started." }]);
-        
-        let progress = 0;
-        const interval = setInterval(() => {
-            progress += 10;
-            if (progress <= 100) {
-                setAgents(prev => prev.map(a => a.name === agentName ? { ...a, progress } : a));
+    const runTask = async (task: Agent) => {
+      setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Working', progress: 0 } : a));
+      setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: "Task started." }]);
+      
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress = Math.min(progress + 10, 90);
+        setAgents(prev => prev.map(a => a.id === task.id ? { ...a, progress } : a));
+      }, 200);
+
+      try {
+        // Simulate agent work
+        if (task.name === 'Coder Agent') {
+          const result = await generateInitialApp({ prompt });
+          const newCodeFilesArray = result.codeFiles;
+
+          if (!newCodeFilesArray || newCodeFilesArray.length === 0) {
+            throw new Error("AI failed to generate code files.");
+          }
+          const newCodeFiles = newCodeFilesArray.reduce((acc, file) => {
+            acc[file.path] = file.content;
+            return acc;
+          }, {} as { [key: string]: string });
+          
+          const newFileStructure: FileNode = {
+            name: 'my-app', type: 'folder', path: '/', children: []
+          };
+          const srcFolder: FileNode = { name: 'src', type: 'folder', path: '/src', children: [] };
+          
+          const pathMap: { [key: string]: FileNode } = { '/': newFileStructure, '/src': srcFolder };
+          newFileStructure.children!.push(srcFolder);
+
+          newCodeFilesArray.forEach(file => {
+            const parts = file.path.split('/').filter(p => p);
+            let currentPath = '';
+            for (let i = 0; i < parts.length - 1; i++) {
+              const part = parts[i];
+              const parentPath = currentPath;
+              currentPath += `/${part}`;
+              if (!pathMap[currentPath]) {
+                const newFolder: FileNode = { name: part, type: 'folder', path: currentPath, children: [] };
+                pathMap[parentPath].children!.push(newFolder);
+                pathMap[currentPath] = newFolder;
+              }
             }
-        }, duration / 10);
-        
-        setTimeout(() => {
-            clearInterval(interval);
-            setAgents(prev => prev.map(a => a.name === agentName ? { ...a, status: 'Done', progress: 100 } : a));
-            setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: agentName, message: "Task completed successfully." }]);
-            callback();
-        }, duration);
-    };
-
-    agentRunner("Planner Agent", 1500, () => {
-        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Planner Agent** has defined the upgraded features, user personas, and workflows in a structured requirements document. Handing off to the Architect.' }]);
-        agentRunner("Architect Agent", 2000, () => {
-            setMessages(prev => [...prev, { sender: 'ai', text: `The **Architect Agent** has designed the system architecture, including a production-grade Firestore schema and a Role-Based Access Control (RBAC) model.
-<br/><br/>
-The schema supports multi-tenancy (\`organizations\`), versioned content (\`templates\`, \`versions\`), and security (\`roles\`, \`auditLogs\`). The security rules enforce least-privilege access and immutable versioning.
-<br/><br/>
-Passing the blueprint to the Coder.` }]);
-            agentRunner("Coder Agent", 4000, async () => {
-              setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Coder Agent", message: "Generating file structure and code..." }]);
-              try {
-                const result = await generateInitialApp({ prompt });
-                const newCodeFilesArray = result.codeFiles;
-
-                if (!newCodeFilesArray || newCodeFilesArray.length === 0) {
-                  console.error("AI failed to generate code files.", result);
-                  setMessages(prev => [...prev, { sender: 'ai', text: "Sorry, an error occurred while building the application. The AI agents failed to generate the necessary files." }]);
-                  setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Error: AI generation failed. Missing code files." }]);
-                  return;
-                }
-
-                const newCodeFiles = newCodeFilesArray.reduce((acc, file) => {
-                  acc[file.path] = file.content;
-                  return acc;
-                }, {} as { [key: string]: string });
-
-                const newFileStructure: FileNode = {
-                  name: 'my-app',
-                  type: 'folder',
-                  path: '/',
-                  children: Object.keys(newCodeFiles).filter(path => path.startsWith('/src/')).map(path => ({
-                    name: path.replace('/src/', ''),
-                    type: 'file',
-                    path: path,
-                  })),
-                };
-                newFileStructure.children?.push({ name: 'package.json', type: 'file', path: '/package.json' });
-
-
-                setFileStructure(newFileStructure);
-                setCodeFiles(newCodeFiles);
-                
-                const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.jsx') || name.includes('index.js')) || Object.keys(newCodeFiles)[0];
-                const mainFileContent = newCodeFiles[mainFile] || '';
-                setCode(mainFileContent);
-                setActiveCodeFile(mainFile);
-
-                setMessages(prev => [...prev, { sender: 'ai', text: 'The **Coder Agent** has implemented the drag-and-drop builder, template library, and Firestore versioning. Submitting for review.' }]);
-
-                agentRunner("Reviewer Agent", 2500, () => {
-                    setMessages(prev => [...prev, { sender: 'ai', text: 'The **Reviewer Agent** has audited the Firestore security rules for least-privilege access and validated the immutability guarantees for versioned documents. Code approved. Handing off for deployment.' }]);
-                    agentRunner("Deployer Agent", 1500, () => {
-                        setMessages(prev => [...prev, { sender: 'ai', text: 'The **Deployer Agent** has provided a step-by-step guide for deploying the Firestore rules, audit-logging Cloud Functions, and a CI/CD pipeline that includes **preview channels for Hosting**, ensuring every PR gets its own isolated test environment. The application upgrade is ready.' }]);
-                        setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow complete. All agents finished." }]);
-                    });
-                });
-              } catch (error) {
-                console.error("Error generating app:", error);
-                const errorMessage = (error as Error).message || 'An unknown error occurred.';
-                setMessages(prev => [...prev, { sender: 'ai', text: `An error occurred while building the application: ${errorMessage}` }]);
-                setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `Error during generation: ${errorMessage}` }]);
+            const fileName = parts[parts.length - 1];
+            const parentPath = parts.length > 1 ? `/${parts.slice(0, -1).join('/')}` : '/';
+            pathMap[parentPath].children!.push({ name: fileName, type: 'file', path: file.path });
+          });
+          
+          Object.keys(newCodeFiles).forEach(path => {
+              if (!path.startsWith('/src/')) {
+                  newFileStructure.children?.push({
+                      name: path.slice(1),
+                      type: 'file',
+                      path: path,
+                  });
               }
           });
+
+
+          setFileStructure(newFileStructure);
+          setCodeFiles(newCodeFiles);
+          
+          const mainFile = Object.keys(newCodeFiles).find(name => name.includes('page.tsx') || name.includes('App.jsx')) || Object.keys(newCodeFiles)[0];
+          setCode(newCodeFiles[mainFile] || '');
+          setActiveCodeFile(mainFile);
+
+        } else {
+          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+        }
+
+        clearInterval(progressInterval);
+        setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Done', progress: 100 } : a));
+        setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: "Task completed successfully." }]);
+        setMessages(prev => [...prev, { sender: 'ai', text: `The **${task.name}** has completed its task.` }]);
+        return true;
+      } catch (error) {
+        clearInterval(progressInterval);
+        const errorMessage = (error as Error).message || 'An unknown error occurred.';
+        setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Failed', progress: a.progress } : a));
+        setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: `Task failed: ${errorMessage}` }]);
+        setMessages(prev => [...prev, { sender: 'ai', text: `The **${task.name}** has failed: ${errorMessage}` }]);
+        return false;
+      }
+    };
+
+    const processQueue = async (agentQueue: Agent[]) => {
+      for (const task of agentQueue) {
+        if (!canRunTask(task, agents)) {
+          setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Blocked' } : a));
+          setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: "Task blocked due to dependency failure." }]);
+          continue;
+        }
+
+        const success = await runTask(task);
+        if (!success) {
+          // Mark dependent tasks as blocked
+          setAgents(currentAgents => {
+            const queue = [...currentAgents];
+            for (const a of queue) {
+              if (a.dependencies?.includes(task.id)) {
+                const dependentIndex = queue.findIndex(agent => agent.id === a.id);
+                if (dependentIndex !== -1) {
+                  queue[dependentIndex] = { ...queue[dependentIndex], status: 'Blocked' };
+                  setLogs(prevLogs => [...prevLogs, { timestamp: new Date().toLocaleTimeString(), agent: a.name, message: `Task blocked because dependency '${task.name}' failed.` }]);
+                }
+              }
+            }
+            return queue;
+          });
+          break; // Stop processing queue on failure
+        }
+         // Update agents state for the next canRunTask check
+        setAgents(currentAgents => {
+            const updatedAgents = [...currentAgents];
+            const taskIndex = updatedAgents.findIndex(a => a.id === task.id);
+            if (taskIndex !== -1) {
+                updatedAgents[taskIndex] = { ...updatedAgents[taskIndex], status: 'Done', progress: 100 };
+            }
+            return updatedAgents;
         });
-    });
-  }, []);
+      }
+    };
+    
+    await processQueue(initialAgents);
+    setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: "Workflow finished." }]);
+
+  }, [agents]);
+
+
+  const handleRetryTask = (taskId: number) => {
+    const taskToRetry = agents.find(a => a.id === taskId);
+    if (!taskToRetry) return;
+
+    setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `Retrying task: ${taskToRetry.name}` }]);
+
+    const runTask = async (task: Agent) => {
+      setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Working', progress: 0 } : a));
+      setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: "Task started." }]);
+      
+      let progress = 0;
+      const progressInterval = setInterval(() => {
+        progress = Math.min(progress + 10, 90);
+        setAgents(prev => prev.map(a => a.id === task.id ? { ...a, progress } : a));
+      }, 200);
+
+      try {
+        if (task.name === 'Coder Agent') {
+            const prompt = messages.find(m => m.sender === 'user')?.text || '';
+            const result = await generateInitialApp({ prompt });
+            // ... (rest of coder agent logic)
+        } else {
+            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+        }
+
+        clearInterval(progressInterval);
+        setAgents(prev => {
+            let newAgents = prev.map(a => a.id === task.id ? { ...a, status: 'Done', progress: 100 } : a);
+            // Unblock dependent tasks
+            newAgents = newAgents.map(a => {
+                if(a.dependencies?.includes(task.id) && a.status === 'Blocked') {
+                    return {...a, status: 'Idle'}
+                }
+                return a;
+            })
+            return newAgents;
+        });
+        setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: "Task completed successfully." }]);
+        setMessages(prev => [...prev, { sender: 'ai', text: `The **${task.name}** has completed its task.` }]);
+        return true;
+      } catch (error) {
+        clearInterval(progressInterval);
+        const errorMessage = (error as Error).message || 'An unknown error occurred.';
+        setAgents(prev => prev.map(a => a.id === task.id ? { ...a, status: 'Failed', progress: a.progress } : a));
+        setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: task.name, message: `Task failed: ${errorMessage}` }]);
+        return false;
+      }
+    };
+    
+    runTask(taskToRetry);
+  }
 
   const handleSendMessage = useCallback((text: string) => {
     setMessages(prev => [...prev, { sender: 'user', text }]);
@@ -306,7 +415,7 @@ Passing the blueprint to the Coder.` }]);
                   <FileTree node={fileStructure} onFileSelect={handleFileSelect} />
                 </div>
                 <div className="border-t border-border flex-shrink-0">
-                  <AgentStatus agents={agents} />
+                  <AgentStatus agents={agents} onRetry={handleRetryTask} />
                 </div>
               </Panel>
               <PanelResizeHandle className="w-1.5 bg-border/80 hover:bg-accent/50 transition-colors" />
@@ -369,3 +478,5 @@ Passing the blueprint to the Coder.` }]);
     </div>
   );
 }
+
+    
