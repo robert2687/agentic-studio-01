@@ -28,12 +28,12 @@ const initialFileStructure: FileNode = {
       type: 'folder',
       path: '/src',
       children: [
-        { name: 'App.jsx', type: 'file', path: '/src/App.jsx' },
-        { name: 'index.js', type: 'file', path: '/src/index.js' },
-        { name: 'styles.css', type: 'file', path: '/src/styles.css' },
+        { name: 'page.tsx', type: 'file', path: '/src/page.tsx' },
+        { name: 'layout.tsx', type: 'file', path: '/src/layout.tsx' },
       ],
     },
     { name: 'package.json', type: 'file', path: '/package.json' },
+    { name: 'jsconfig.json', type: 'file', path: '/jsconfig.json' },
   ],
 };
 
@@ -107,16 +107,17 @@ My team of agents is ready to generate a production-ready upgrade for the **AI B
 Tell me to "start the build" to begin the upgrade.` }
   ]);
   const [logs, setLogs] = useState<Log[]>([]);
-  const [activeCodeFile, setActiveCodeFile] = useState('/src/App.jsx');
+  const [activeCodeFile, setActiveCodeFile] = useState('/src/page.tsx');
   
   const [code, setCode] = useState(initialCode);
   const { isSaving } = useAutoSave(code, EDITOR_STORAGE_KEY);
 
   const [codeFiles, setCodeFiles] = useState<{ [key: string]: string }>({
-    '/src/App.jsx': initialCode,
+    '/src/page.tsx': initialCode,
     '/src/styles.css': initialStylesCss,
-    '/src/index.js': initialIndexJs,
-    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0" }, "main": "/src/index.js" }',
+    '/src/layout.tsx': initialIndexJs,
+    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "lucide-react": "latest" }, "main": "/src/page.tsx" }',
+    '/jsconfig.json': '{ "compilerOptions": { "baseUrl": ".", "paths": { "@/*": ["src/*"] } } }'
   });
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -345,7 +346,11 @@ Tell me to "start the build" to begin the upgrade.` }
 
   const handleSendMessage = useCallback((text: string) => {
     setMessages(prev => [...prev, { sender: 'user', text }]);
-    runAgentWorkflow(text);
+    if (text.toLowerCase().includes("start the build")) {
+      runAgentWorkflow("Upgrade the AI Builder Studio with a drag-and-drop form builder, template library, Firestore versioning, RBAC, and a secure backend.");
+    } else {
+      runAgentWorkflow(text);
+    }
   }, [runAgentWorkflow]);
 
   const handleCodeChange = useCallback((newCode: string) => {

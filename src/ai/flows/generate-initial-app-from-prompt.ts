@@ -19,7 +19,7 @@ export type GenerateInitialAppInput = z.infer<typeof GenerateInitialAppInputSche
 
 const GenerateInitialAppOutputSchema = z.object({
   codeFiles: z.array(z.object({
-    path: z.string().describe('The full path of the file, starting with a forward slash (e.g., /src/app/page.tsx).'),
+    path: z.string().describe('The full path of the file, starting with a forward slash (e.g., /src/app/page.tsx). Use relative paths for imports (e.g. ../components/ui/button) instead of aliases like @/.'),
     content: z.string().describe('The complete, raw code for the file as a string.'),
   })).describe('An array of objects, where each object represents a file with its path and content.'),
 });
@@ -45,6 +45,7 @@ const prompt = ai.definePrompt({
       -   **Styling:** Use Tailwind CSS utility classes. Strictly adhere to the design system defined in the global CSS file (e.g., use \`bg-primary\`, \`text-foreground\`, \`border\`). Do not use arbitrary values.
       -   **Icons:** Use icons from the \`lucide-react\` library.
       -   **Fonts:** Use the configured fonts: \`font-sans\` for body, \`font-grotesk\` for headings.
+      -   **IMPORTANT PATHS:** When importing components, you MUST use relative paths (e.g., '../components/ui/button') instead of path aliases (e.g., '@/components/ui/button').
 
   3.  **File Structure & Architecture:**
       -   Generate a complete and runnable Next.js application structure within the \`/src\` directory.
