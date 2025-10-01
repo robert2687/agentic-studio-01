@@ -85,7 +85,8 @@ h1, h2, p {
 }
 `
 
-const EDITOR_STORAGE_KEY = 'synapse-editor-code';
+const EDITOR_CODE_STORAGE_KEY = 'agentic-studio-code';
+const EDITOR_FILES_STORAGE_KEY = 'agentic-studio-code-files';
 
 export default function AgenticStudioPage() {
   const [fileStructure, setFileStructure] = useState<FileNode>(initialFileStructure);
@@ -108,7 +109,7 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
   const [activeCodeFile, setActiveCodeFile] = useState('/src/page.tsx');
   
   const [code, setCode] = useState(initialCode);
-  const { isSaving } = useAutoSave(code, EDITOR_STORAGE_KEY);
+  const { isSaving } = useAutoSave(code, EDITOR_CODE_STORAGE_KEY);
 
   const [codeFiles, setCodeFiles] = useState<{ [key: string]: string }>({
     '/src/page.tsx': initialCode,
@@ -124,15 +125,24 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
 
   useEffect(() => {
     try {
-      const savedCode = localStorage.getItem(EDITOR_STORAGE_KEY);
+      const savedCode = localStorage.getItem(EDITOR_CODE_STORAGE_KEY);
       if (savedCode) {
-        const parsedCode = JSON.parse(savedCode);
-        if (typeof parsedCode === 'string') {
-          setCode(parsedCode);
-        }
+        setCode(JSON.parse(savedCode));
+      }
+      const savedFiles = localStorage.getItem(EDITOR_FILES_STORAGE_KEY);
+      if (savedFiles) {
+        setCodeFiles(JSON.parse(savedFiles));
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
+      // If parsing fails, reset to initial state
+      setCode(initialCode);
+      setCodeFiles({
+        '/src/page.tsx': initialCode,
+        '/src/styles.css': initialStylesCss,
+        '/src/layout.tsx': initialIndexJs,
+        '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "lucide-react": "latest" }, "main": "/src/page.tsx" }',
+      });
     }
   }, []);
 
@@ -371,11 +381,13 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
 
   const handleCodeChange = useCallback((newCode: string) => {
     setCode(newCode);
-    setCodeFiles(prev => ({
-        ...prev,
+    const updatedFiles = {
+        ...codeFiles,
         [activeCodeFile]: newCode
-    }))
-  }, [activeCodeFile]);
+    };
+    setCodeFiles(updatedFiles);
+    localStorage.setItem(EDITOR_FILES_STORAGE_KEY, JSON.stringify(updatedFiles));
+  }, [activeCodeFile, codeFiles]);
 
   const handleFileSelect = (path: string) => {
     if (codeFiles[path] !== undefined) {
@@ -503,3 +515,5 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
     </div>
   );
 }
+
+    

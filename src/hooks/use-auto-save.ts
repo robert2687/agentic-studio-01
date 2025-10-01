@@ -14,6 +14,11 @@ export function useAutoSave<T>(data: T, key: string, delay = 1000) {
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
+    // Don't save initial or empty data
+    if (data === undefined || (typeof data === 'string' && data.includes('Welcome to Agentic Studio'))) {
+        return;
+    }
+    
     const handler = setTimeout(() => {
       setIsSaving(true);
       try {
@@ -38,3 +43,5 @@ export function useAutoSave<T>(data: T, key: string, delay = 1000) {
 
   return { isSaving };
 }
+
+    
