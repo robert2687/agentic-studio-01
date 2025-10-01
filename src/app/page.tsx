@@ -29,8 +29,9 @@ const initialFileStructure: FileNode = {
       type: 'folder',
       path: '/src',
       children: [
-        { name: 'page.tsx', type: 'file', path: '/src/page.tsx' },
-        { name: 'layout.tsx', type: 'file', path: '/src/layout.tsx' },
+        { name: 'App.js', type: 'file', path: '/src/App.js' },
+        { name: 'index.js', type: 'file', path: '/src/index.js' },
+        { name: 'styles.css', type: 'file', path: '/src/styles.css' },
       ],
     },
     { name: 'package.json', type: 'file', path: '/package.json' },
@@ -45,8 +46,9 @@ const initialAgents: Agent[] = [
     { id: 5, name: 'Deployer Agent', status: 'Idle', progress: 0, dependencies: [4] },
 ];
 
-const initialCode = `
+const initialAppJs = `
 import React from 'react';
+import './styles.css';
 
 export default function App() {
   return (
@@ -61,7 +63,7 @@ export default function App() {
 const initialIndexJs = `
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./page";
+import App from "./App";
 
 const root = createRoot(document.getElementById("root"));
 root.render(
@@ -83,7 +85,7 @@ body {
 h1, h2, p {
   font-family: sans-serif;
 }
-`
+`;
 
 const EDITOR_CODE_STORAGE_KEY = 'agentic-studio-code';
 const EDITOR_FILES_STORAGE_KEY = 'agentic-studio-code-files';
@@ -106,16 +108,16 @@ My team of agents is ready to generate a production-ready upgrade for the **AI B
 Tell me to "start the build" to begin the upgrade, or ask me to "generate code for..." a specific component.` }
   ]);
   const [logs, setLogs] = useState<Log[]>([]);
-  const [activeCodeFile, setActiveCodeFile] = useState('/src/page.tsx');
+  const [activeCodeFile, setActiveCodeFile] = useState('/src/App.js');
   
-  const [code, setCode] = useState(initialCode);
+  const [code, setCode] = useState(initialAppJs);
   const { isSaving } = useAutoSave(code, EDITOR_CODE_STORAGE_KEY);
 
   const [codeFiles, setCodeFiles] = useState<{ [key: string]: string }>({
-    '/src/page.tsx': initialCode,
+    '/src/App.js': initialAppJs,
     '/src/styles.css': initialStylesCss,
-    '/src/layout.tsx': initialIndexJs,
-    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "lucide-react": "latest" }, "main": "/src/page.tsx" }',
+    '/src/index.js': initialIndexJs,
+    '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "lucide-react": "latest" }, "main": "/src/index.js" }',
   });
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -131,17 +133,25 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
       }
       const savedFiles = localStorage.getItem(EDITOR_FILES_STORAGE_KEY);
       if (savedFiles) {
-        setCodeFiles(JSON.parse(savedFiles));
+        const parsedFiles = JSON.parse(savedFiles);
+        // Basic validation
+        if (parsedFiles['/package.json']) {
+          setCodeFiles(parsedFiles);
+          // Find the main file to set as active
+          const mainFile = Object.keys(parsedFiles).find(name => name.includes('App.js') || name.includes('page.tsx')) || '/src/App.js';
+          setActiveCodeFile(mainFile);
+          setCode(parsedFiles[mainFile] || '');
+        }
       }
     } catch (error) {
       console.error("Failed to load from localStorage", error);
       // If parsing fails, reset to initial state
-      setCode(initialCode);
+      setCode(initialAppJs);
       setCodeFiles({
-        '/src/page.tsx': initialCode,
+        '/src/App.js': initialAppJs,
         '/src/styles.css': initialStylesCss,
-        '/src/layout.tsx': initialIndexJs,
-        '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "lucide-react": "latest" }, "main": "/src/page.tsx" }',
+        '/src/index.js': initialIndexJs,
+        '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "lucide-react": "latest" }, "main": "/src/index.js" }',
       });
     }
   }, []);
@@ -219,7 +229,7 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
           setFileStructure(newFileStructure);
           setCodeFiles(newCodeFiles);
           
-          const mainFile = Object.keys(newCodeFiles).find(name => name.includes('page.tsx') || name.includes('App.jsx')) || Object.keys(newCodeFiles)[0];
+          const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.js') || name.includes('page.tsx')) || Object.keys(newCodeFiles)[0];
           setCode(newCodeFiles[mainFile] || '');
           setActiveCodeFile(mainFile);
 
@@ -516,5 +526,3 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
     </div>
   );
 }
-
-    

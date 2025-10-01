@@ -39,7 +39,9 @@ export const SandpackPreviewComponent: React.FC<SandpackPreviewComponentProps> =
             files={sandpackFiles}
             theme="dark"
             options={{
-              entry: '/src/index.js'
+              entry: '/src/index.js',
+              main: '/src/index.js',
+              activeFile: sandpackFiles['/src/App.js'] ? '/src/App.js' : Object.keys(sandpackFiles).find(f => f.startsWith('/src')) || '/src/index.js'
             }}
         >
             <SandpackLayout>
