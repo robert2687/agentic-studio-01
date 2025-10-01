@@ -39,5 +39,3 @@ export const CanvasView: React.FC<CanvasViewProps> = ({ onGenerate }) => (
         </div>
     </div>
 );
-
-    
