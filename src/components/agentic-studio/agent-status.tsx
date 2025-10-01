@@ -52,5 +52,3 @@ export const AgentStatus: React.FC<AgentStatusProps> = ({ agents, onRetry }) => 
     </div>
   </div>
 );
-
-    

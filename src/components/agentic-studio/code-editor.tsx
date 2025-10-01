@@ -44,5 +44,3 @@ export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFil
         </div>
     );
 };
-
-    

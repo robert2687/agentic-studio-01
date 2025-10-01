@@ -88,8 +88,3 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages, onSendMessage }) =
         </div>
     );
 };
-
-    
-
-
-    

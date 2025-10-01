@@ -186,6 +186,7 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
           newCodeFilesArray.forEach(file => {
             const parts = file.path.split('/').filter(p => p);
             let parentNode: FileNode | undefined = newFileStructure;
+            let currentPath = '';
 
             for (let i = 0; i < parts.length - 1; i++) {
                 currentPath += `/${parts[i]}`;
@@ -236,7 +237,6 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
       }
     };
 
-    let currentPath = '';
     const processQueue = async () => {
         let queue = [...initialAgents];
         while(queue.some(a => a.status === 'Idle' || a.status === 'Working')) {
