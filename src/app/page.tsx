@@ -34,7 +34,6 @@ const initialFileStructure: FileNode = {
       ],
     },
     { name: 'package.json', type: 'file', path: '/package.json' },
-    { name: 'jsconfig.json', type: 'file', path: '/jsconfig.json' },
   ],
 };
 
@@ -48,7 +47,6 @@ const initialAgents: Agent[] = [
 
 const initialCode = `
 import React from 'react';
-import './styles.css';
 
 export default function App() {
   return (
@@ -63,8 +61,7 @@ export default function App() {
 const initialIndexJs = `
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import App from "./App";
-import "./styles.css";
+import App from "./page";
 
 const root = createRoot(document.getElementById("root"));
 root.render(
@@ -118,7 +115,6 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
     '/src/styles.css': initialStylesCss,
     '/src/layout.tsx': initialIndexJs,
     '/package.json': '{ "name": "my-app", "dependencies": { "react": "18.2.0", "react-dom": "18.2.0", "lucide-react": "latest" }, "main": "/src/page.tsx" }',
-    '/jsconfig.json': '{ "compilerOptions": { "baseUrl": ".", "paths": { "@/*": ["src/*"] } } }'
   });
   
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -186,28 +182,26 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
           const newFileStructure: FileNode = {
             name: 'my-app', type: 'folder', path: '/', children: []
           };
-          const srcFolder: FileNode = { name: 'src', type: 'folder', path: '/src', children: [] };
-          
-          const pathMap: { [key: string]: FileNode } = { '/': newFileStructure };
           
           newCodeFilesArray.forEach(file => {
             const parts = file.path.split('/').filter(p => p);
-            let currentPath = '';
-            let parentNode = newFileStructure;
+            let parentNode: FileNode | undefined = newFileStructure;
 
             for (let i = 0; i < parts.length - 1; i++) {
                 currentPath += `/${parts[i]}`;
-                let folderNode = parentNode.children?.find(child => child.name === parts[i] && child.type === 'folder');
+                if (!parentNode) continue;
+                if (!parentNode.children) parentNode.children = [];
+                
+                let folderNode = parentNode.children.find(child => child.name === parts[i] && child.type === 'folder');
                 if (!folderNode) {
                     folderNode = { name: parts[i], type: 'folder', path: currentPath, children: [] };
-                    if (!parentNode.children) parentNode.children = [];
                     parentNode.children.push(folderNode);
                 }
                 parentNode = folderNode;
             }
             
-            if (!parentNode.children) parentNode.children = [];
-            parentNode.children.push({ name: parts[parts.length - 1], type: 'file', path: file.path });
+            if (parentNode && !parentNode.children) parentNode.children = [];
+            parentNode?.children?.push({ name: parts[parts.length - 1], type: 'file', path: file.path });
           });
 
           setFileStructure(newFileStructure);
@@ -242,6 +236,7 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
       }
     };
 
+    let currentPath = '';
     const processQueue = async () => {
         let queue = [...initialAgents];
         while(queue.some(a => a.status === 'Idle' || a.status === 'Working')) {
