@@ -16,8 +16,7 @@ import { LogsView, type Log } from '@/components/agentic-studio/logs-view';
 import { useToast } from "@/hooks/use-toast";
 import { useAutoSave } from '@/hooks/use-auto-save';
 import { SettingsDialog } from '@/components/agentic-studio/settings-dialog';
-import { generateInitialApp } from '@/ai/flows/generate-initial-app-from-prompt';
-import { generateCodeFromPrompt } from '@/ai/flows/generate-code-from-prompt';
+
 
 const initialFileStructure: FileNode = {
   name: 'my-app',
@@ -188,55 +187,8 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
 
       try {
         // Simulate agent work
-        if (task.name === 'Coder Agent') {
-          const result = await generateInitialApp({ prompt });
-          const newCodeFilesArray = result.codeFiles;
-
-          if (!newCodeFilesArray || newCodeFilesArray.length === 0) {
-            throw new Error("AI failed to generate code files.");
-          }
-          const newCodeFiles = newCodeFilesArray.reduce((acc, file) => {
-            acc[file.path] = file.content;
-            return acc;
-          }, {} as { [key: string]: string });
-          
-          const newFileStructure: FileNode = {
-            name: 'my-app', type: 'folder', path: '/', children: []
-          };
-          
-          newCodeFilesArray.forEach(file => {
-            const parts = file.path.split('/').filter(p => p);
-            let parentNode: FileNode | undefined = newFileStructure;
-            let currentPath = '';
-
-            for (let i = 0; i < parts.length - 1; i++) {
-                currentPath += `/${parts[i]}`;
-                if (!parentNode) continue;
-                if (!parentNode.children) parentNode.children = [];
-                
-                let folderNode = parentNode.children.find(child => child.name === parts[i] && child.type === 'folder');
-                if (!folderNode) {
-                    folderNode = { name: parts[i], type: 'folder', path: currentPath, children: [] };
-                    parentNode.children.push(folderNode);
-                }
-                parentNode = folderNode;
-            }
-            
-            if (parentNode && !parentNode.children) parentNode.children = [];
-            parentNode?.children?.push({ name: parts[parts.length - 1], type: 'file', path: file.path });
-          });
-
-          setFileStructure(newFileStructure);
-          setCodeFiles(newCodeFiles);
-          
-          const mainFile = Object.keys(newCodeFiles).find(name => name.includes('App.js') || name.includes('page.tsx')) || Object.keys(newCodeFiles)[0];
-          setCode(newCodeFiles[mainFile] || '');
-          setActiveCodeFile(mainFile);
-
-        } else {
-          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-        }
-
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
+        
         clearInterval(progressInterval);
         setAgents(prev => {
             currentAgents = prev.map(a => a.id === task.id ? { ...a, status: 'Done', progress: 100 } : a);
@@ -306,8 +258,16 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
     setLogs(prev => [...prev, { timestamp: new Date().toLocaleTimeString(), agent: "Orchestrator", message: `Code snippet generation requested: '${prompt}'.` }]);
     
     try {
-      const result = await generateCodeFromPrompt({ prompt });
-      const { code } = result;
+      // Dummy code generation
+      const code = `
+const NewComponent = () => {
+  return (
+    <div>
+      {/* Your generated component based on: ${prompt} */}
+    </div>
+  );
+};
+      `.trim();
       const formattedCode = 'Here is the generated code snippet:\n```tsx\n' + code + '\n```';
       setMessages(prev => [...prev, { sender: 'ai', text: formattedCode }]);
     } catch(error) {
@@ -334,13 +294,7 @@ Tell me to "start the build" to begin the upgrade, or ask me to "generate code f
       }, 200);
 
       try {
-        if (task.name === 'Coder Agent') {
-            const prompt = messages.find(m => m.sender === 'user')?.text || '';
-            const result = await generateInitialApp({ prompt });
-            // ... (rest of coder agent logic)
-        } else {
-            await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-        }
+        await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
 
         clearInterval(progressInterval);
         setAgents(prev => {
