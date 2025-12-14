@@ -39,7 +39,6 @@ export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFil
                     readOnly: false,
                 }}
                 theme="dark"
-                onCodeUpdate={(newCode) => onCodeChange(newCode)}
             />
         </div>
     );

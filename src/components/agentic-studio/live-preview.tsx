@@ -23,7 +23,6 @@ export const SandpackPreview: React.FC<SandpackPreviewProps> = ({ code }) => {
                 showConsole: false,
                 showConsoleButton: false,
                 editorHeight: '100%',
-                previewHeight: '100%',
             }}
             theme="dark"
         />

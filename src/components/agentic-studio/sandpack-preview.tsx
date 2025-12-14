@@ -13,12 +13,13 @@ interface SandpackPreviewComponentProps {
 const OpenInNewWindowButton = () => {
     const { sandpack } = useSandpack();
     const openInNewWindow = () => {
-        if (sandpack.clientId) {
-            window.open(`https://sandpack.codesandbox.io/p/v2/embed.html?clientId=${sandpack.clientId}`, '_blank');
+        const clientId = Object.keys(sandpack.clients)[0];
+        if (clientId) {
+            window.open(`https://sandpack.codesandbox.io/p/v2/embed.html?clientId=${clientId}`, '_blank');
         }
     }
     return (
-        <Button size="sm" variant="outline" onClick={openInNewWindow} disabled={!sandpack.clientId}>
+        <Button size="sm" variant="outline" onClick={openInNewWindow} disabled={!Object.keys(sandpack.clients).length}>
             <ExternalLink size={16} className="mr-2" /> Open in New Window
         </Button>
     )
@@ -39,8 +40,6 @@ export const SandpackPreviewComponent: React.FC<SandpackPreviewComponentProps> =
             files={sandpackFiles}
             theme="dark"
             options={{
-              entry: '/src/index.js',
-              main: '/src/index.js',
               activeFile: sandpackFiles['/src/App.js'] ? '/src/App.js' : Object.keys(sandpackFiles).find(f => f.startsWith('/src')) || '/src/index.js'
             }}
         >
