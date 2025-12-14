@@ -12,7 +12,7 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase";
 
-export async function signInWithEmail(email, password) {
+export async function signInWithEmail(email: string, password: string) {
   let result = null,
     error = null;
   try {
@@ -24,7 +24,7 @@ export async function signInWithEmail(email, password) {
   return { result, error };
 }
 
-export async function signUpWithEmail(email, password) {
+export async function signUpWithEmail(email: string, password: string) {
   let result = null,
     error = null;
   try {
