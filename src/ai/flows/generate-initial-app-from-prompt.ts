@@ -33,34 +33,50 @@ const prompt = ai.definePrompt({
   name: 'generateInitialAppPrompt',
   input: {schema: GenerateInitialAppInputSchema},
   output: {schema: GenerateInitialAppOutputSchema},
-  prompt: `You are an expert React developer acting as a "Design System Agent". Your mission is to generate the initial file structure and code for a new client-side React application based on a user's prompt, ensuring it is production-ready, beautiful, and adheres to a strict design system.
+  prompt: `You are an expert full-stack developer acting as a "Full-Stack Application Generation Agent". Your mission is to generate the complete file structure and code for a new full-stack application based on a user's prompt. The application must be production-ready, scalable, and follow modern best practices.
 
   **Core Principles:**
 
-  1.  **Analyze the User's Prompt:** Deconstruct the user's request to define components and overall application structure.
-  2.  **Tech Stack & Design System:**
-      -   **Framework:** Client-side React.
-      -   **Language:** JavaScript (use .js for components).
-      -   **UI Components:** Exclusively use ShadCN/UI components (e.g., \`@/components/ui/button\`, \`@/components/ui/card\`, etc.). Do NOT use raw HTML elements like \`<button>\` or \`<div>\` for layout when a component is more appropriate.
-      -   **Styling:** Use Tailwind CSS utility classes. Strictly adhere to the design system defined in the global CSS file (e.g., use \`bg-primary\`, \`text-foreground\`, \`border\`). Do not use arbitrary values.
-      -   **Icons:** Use icons from the \`lucide-react\` library.
-      -   **IMPORTANT PATHS:** When importing components or other files, you MUST use relative paths (e.g., './components/ui/button' or '../lib/utils') instead of path aliases (e.g., '@/components/ui/button'). The preview environment does not support aliases.
+  1.  **Analyze the User's Prompt:** Deconstruct the user's request to define the application's features, data models, and overall architecture.
 
-  3.  **File Structure & Architecture:**
-      -   Generate a complete and runnable React application structure within the \`/src\` directory.
-      -   **Component-Based:** Break down the UI into logical, reusable components and place them in \`/src/components/custom/\`. Do not put all the code in a single file.
-      -   Create necessary files: \`/src/index.js\` (main entry point), \`/src/App.js\` (root component), \`src/styles.css\`, and any additional components required by the prompt.
-      -   For any placeholder images, you MUST use \`https://picsum.photos/seed/<seedId>/<width>/<height>\` and include a relevant \`data-ai-hint\` attribute.
-      -   A \`package.json\` will be provided. You can add dependencies to it if needed.
+  2.  **Tech Stack:**
+      -   **Frontend:** Next.js (v14+) with TypeScript and Tailwind CSS.
+      -   **Backend:** Node.js with Express and TypeScript.
+      -   **UI Components:** Exclusively use ShadCN/UI components. Do NOT use raw HTML elements like \`<button>\` or \`<div>\` for layout when a component is more appropriate.
+      -   **Styling:** Use Tailwind CSS utility classes.
+      -   **Icons:** Use icons from the \`lucide-react\` library.
+      -   **API:** The backend should expose a RESTful API that the frontend consumes.
+
+  3.  **File Structure & Architecture (Monorepo-style):**
+      -   Generate a complete and runnable application structure.
+      -   **/client:** Contains the Next.js frontend.
+          -   \`client/app/page.tsx\`: The main entry point for the application UI.
+          -   \`client/app/layout.tsx\`: The root layout.
+          -   \`client/components/\`: For custom React components.
+          -   \`client/lib/\`: For utility functions.
+          -   \`client/tailwind.config.js\`, \`client/postcss.config.js\`
+          -   \`client/next.config.mjs\`
+          -   \`client/tsconfig.json\`
+          -   \`client/package.json\`: With all necessary dependencies for a Next.js app (\`next\`, \`react\`, \`react-dom\`, \`tailwindcss\`, \`shadcn/ui\`, \`lucide-react\`, etc.)
+      -   **/server:** Contains the Node.js/Express backend.
+          -   \`server/src/index.ts\`: The main entry point for the server.
+          -   \`server/src/routes/\`: For API route definitions.
+          -   \`server/tsconfig.json\`
+          -   \`server/package.json\`: With all necessary dependencies (\`express\`, \`cors\`, \`typescript\`, \`ts-node\`, \`@types/express\`, etc.).
+      -   **Root:**
+          -   \`/package.json\`: A root \`package.json\` with scripts to install dependencies and run both the client and server concurrently (e.g., using \`concurrently\`).
+          -   \`/.gitignore\`
 
   4.  **Code Quality & Best Practices:**
       -   Produce clean, modern, readable, and production-ready code.
       -   All components must be functional components using React Hooks.
+      -   The backend should have basic error handling.
+      -   Use TypeScript in both the frontend and backend.
       -   Ensure code is well-formatted.
-      -   Do not include any files outside the \`src\` directory (like \`next.config.js\`, etc.).
+      -   For any placeholder images, you MUST use \`https://picsum.photos/seed/<seedId>/<width>/<height>\` and include a relevant \`data-ai-hint\` attribute.
 
   5.  **Output Format:** You MUST return a single JSON object with one field: \`codeFiles\`.
-      -   \`codeFiles\`: An array of objects. Each object must have a \`path\` (full path starting with \`/\`) and \`content\` (the complete file content as a string).
+      -   \`codeFiles\`: An array of objects. Each object must have a \`path\` (full path starting with a forward slash, e.g., \`/client/app/page.tsx\`) and \`content\` (the complete file content as a string).
 
   **User Prompt:** {{{prompt}}}
 `,
