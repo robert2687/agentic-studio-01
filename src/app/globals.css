@@ -27,6 +27,9 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 243.8 80% 59.4%;
     --radius: 0.5rem;
+    --font-inter: 'Inter', sans-serif;
+    --font-space-grotesk: 'Space Grotesk', sans-serif;
+    --font-source-code-pro: 'Source Code Pro', monospace;
   }
  
   .dark {
@@ -58,6 +61,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter);
   }
 }
 
