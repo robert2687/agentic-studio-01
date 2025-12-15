@@ -23,7 +23,7 @@ export default function RootLayout({
           rel="stylesheet" 
         />
       </head>
-      <body className="font-sans antialiased" style={{ fontFamily: 'Inter, sans-serif' }}>
+      <body className="font-sans antialiased">
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
