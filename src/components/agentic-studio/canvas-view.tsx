@@ -34,7 +34,7 @@ export const CanvasView: React.FC<CanvasViewProps> = ({ onGenerate }) => (
             </div>
 
             <p className="text-xs text-muted-foreground mt-12">
-                Click "Build from a Prompt" to generate a new application.
+                Click &quot;Build from a Prompt&quot; to generate a new application.
             </p>
         </div>
     </div>
