@@ -2,15 +2,44 @@
 "use client";
 
 import React from 'react';
+import { Sandpack } from "@codesandbox/sandpack-react";
 
 interface CodeEditorViewProps {
-    content: string;
+    files: { [key: string]: string };
+    activeFile: string;
+    code: string;
+    onCodeChange: (newCode: string) => void;
 }
 
-export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ content }) => (
-    <div className="h-full bg-[#1e293b] p-4 overflow-auto font-mono text-sm rounded-lg m-2 border border-border">
-        <pre><code className="language-jsx text-gray-300">{content}</code></pre>
-    </div>
-);
-
+export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFile, code, onCodeChange }) => {
     
+    const sandpackFiles = Object.entries(files).reduce((acc, [path, fileContent]) => {
+        const sandpackPath = path.startsWith('/') ? path : `/${path}`;
+        if (path === activeFile) {
+            acc[sandpackPath] = { code: code, active: true };
+        } else {
+            acc[sandpackPath] = fileContent;
+        }
+        return acc;
+    }, {} as { [key: string]: any });
+
+    return (
+        <div className="h-full w-full bg-card">
+            <Sandpack
+                template="react"
+                files={sandpackFiles}
+                options={{
+                    showLineNumbers: true,
+                    showInlineErrors: true,
+                    showNavigator: false,
+                    showTabs: true,
+                    showConsole: false,
+                    showConsoleButton: false,
+                    editorHeight: 'calc(100vh - 100px)',
+                    readOnly: false,
+                }}
+                theme="dark"
+            />
+        </div>
+    );
+};
