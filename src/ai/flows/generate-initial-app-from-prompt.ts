@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -17,8 +18,10 @@ const GenerateInitialAppInputSchema = z.object({
 export type GenerateInitialAppInput = z.infer<typeof GenerateInitialAppInputSchema>;
 
 const GenerateInitialAppOutputSchema = z.object({
-  fileStructure: z.string().describe('The generated file structure as a JSON string.'),
-  codeFiles: z.string().describe('The generated code files as a JSON string, where keys are file names and values are file contents.'),
+  codeFiles: z.array(z.object({
+    path: z.string().describe('The full path of the file, starting with a forward slash (e.g., /src/App.js). Use relative paths for imports (e.g. ./components/ui/button) instead of aliases like @/.'),
+    content: z.string().describe('The complete, raw code for the file as a string.'),
+  })).describe('An array of objects, where each object represents a file with its path and content.'),
 });
 export type GenerateInitialAppOutput = z.infer<typeof GenerateInitialAppOutputSchema>;
 
@@ -30,49 +33,52 @@ const prompt = ai.definePrompt({
   name: 'generateInitialAppPrompt',
   input: {schema: GenerateInitialAppInputSchema},
   output: {schema: GenerateInitialAppOutputSchema},
-  prompt: `You are an expert full-stack developer tasked with generating the initial file structure and code for a Next.js application based on a user's prompt.
+  prompt: `You are an expert full-stack developer acting as a "Full-Stack Application Generation Agent". Your mission is to generate the complete file structure and code for a new full-stack application based on a user's prompt. The application must be production-ready, scalable, and follow modern best practices.
 
-  Instructions:
-  1.  Based on the prompt, create a basic file structure including essential files and folders (e.g., src, components, pages, styles, public).
-  2.  Generate code for the main components and pages, focusing on functionality and basic UI elements.
-  3.  Return the file structure as a JSON string.
-  4.  Return the code files as a JSON string, where keys are filenames and values are file contents.  Include file extensions.
+  **Core Principles:**
 
-  Example:
-  {
-    "fileStructure": '{\n      "name": "my-app",
-      "type": "folder",
-      "children": [{
-        "name": "src",
-        "type": "folder",
-        "children": [{
-          "name": "components",
-          "type": "folder",
-          "children": [{
-            "name": "MyComponent.jsx",
-            "type": "file"
-          }]
-        }, {
-          "name": "pages",
-          "type": "folder",
-          "children": [{
-            "name": "index.jsx",
-            "type": "file"
-          }]
-        }]
-      }, {
-        "name": "package.json",
-        "type": "file"
-      }]
-    }',
-    "codeFiles": '{
-      "src/components/MyComponent.jsx": "// MyComponent code",
-      "src/pages/index.jsx": "// Index page code",
-      "package.json": "{\n  \"name\": \"my-app\",\n  \"version\": \"0.1.0\",\n  \"private\": true,\n  \"scripts\": {\n    \"dev\": \"next dev\",\n    \"build\": \"next build\",\n    \"start\": \"next start\",\n    \"lint\": \"next lint\"\n  },\n  \"dependencies\": {\n    \"next\": \"^14.0.0\",\n    \"react\": \"^18\",\n    \"react-dom\": \"^18\"\n  },\n  \"devDependencies\": {\n    \"eslint\": \"^8\",\n    \"eslint-config-next\": \"14.0.0\"\n  }\n}"
-    }'
-  }
+  1.  **Analyze the User's Prompt:** Deconstruct the user's request to define the application's features, data models, and overall architecture.
 
-  Prompt: {{{prompt}}}
+  2.  **Tech Stack:**
+      -   **Frontend:** Next.js (v14+) with TypeScript and Tailwind CSS.
+      -   **Backend:** Node.js with Express and TypeScript.
+      -   **UI Components:** Exclusively use ShadCN/UI components. Do NOT use raw HTML elements like \`<button>\` or \`<div>\` for layout when a component is more appropriate.
+      -   **Styling:** Use Tailwind CSS utility classes.
+      -   **Icons:** Use icons from the \`lucide-react\` library.
+      -   **API:** The backend should expose a RESTful API that the frontend consumes.
+
+  3.  **File Structure & Architecture (Monorepo-style):**
+      -   Generate a complete and runnable application structure.
+      -   **/client:** Contains the Next.js frontend.
+          -   \`client/app/page.tsx\`: The main entry point for the application UI.
+          -   \`client/app/layout.tsx\`: The root layout.
+          -   \`client/components/\`: For custom React components.
+          -   \`client/lib/\`: For utility functions.
+          -   \`client/tailwind.config.js\`, \`client/postcss.config.js\`
+          -   \`client/next.config.mjs\`
+          -   \`client/tsconfig.json\`
+          -   \`client/package.json\`: With all necessary dependencies for a Next.js app (\`next\`, \`react\`, \`react-dom\`, \`tailwindcss\`, \`shadcn/ui\`, \`lucide-react\`, etc.)
+      -   **/server:** Contains the Node.js/Express backend.
+          -   \`server/src/index.ts\`: The main entry point for the server.
+          -   \`server/src/routes/\`: For API route definitions.
+          -   \`server/tsconfig.json\`
+          -   \`server/package.json\`: With all necessary dependencies (\`express\`, \`cors\`, \`typescript\`, \`ts-node\`, \`@types/express\`, etc.).
+      -   **Root:**
+          -   \`/package.json\`: A root \`package.json\` with scripts to install dependencies and run both the client and server concurrently (e.g., using \`concurrently\`).
+          -   \`/.gitignore\`
+
+  4.  **Code Quality & Best Practices:**
+      -   Produce clean, modern, readable, and production-ready code.
+      -   All components must be functional components using React Hooks.
+      -   The backend should have basic error handling.
+      -   Use TypeScript in both the frontend and backend.
+      -   Ensure code is well-formatted.
+      -   For any placeholder images, you MUST use \`https://picsum.photos/seed/<seedId>/<width>/<height>\` and include a relevant \`data-ai-hint\` attribute.
+
+  5.  **Output Format:** You MUST return a single JSON object with one field: \`codeFiles\`.
+      -   \`codeFiles\`: An array of objects. Each object must have a \`path\` (full path starting with a forward slash, e.g., \`/client/app/page.tsx\`) and \`content\` (the complete file content as a string).
+
+  **User Prompt:** {{{prompt}}}
 `,
 });
 
@@ -87,4 +93,3 @@ const generateInitialAppFlow = ai.defineFlow(
     return output!;
   }
 );
-
