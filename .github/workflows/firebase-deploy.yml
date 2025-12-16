@@ -160,18 +160,15 @@ jobs:
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
     needs: build
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18, 20]
-    name: Preview (Node.js ${{ matrix.node-version }})
+    name: Preview (Node.js 20)
     outputs:
-      preview_url_node_${{ matrix.node-version }}: ${{ steps.hosting_deploy.outputs.details_url }}
+      preview_url_node_20: ${{ steps.hosting_deploy.outputs.details_url }}
     steps:
       - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'npm'
 
       - run: npm ci
@@ -180,7 +177,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-output-node${{ matrix.node-version }}
+          name: build-output-node20
           path: ./dist
 
       - name: Deploy to Hosting Preview Channel
@@ -190,14 +187,14 @@ jobs:
           repoToken: "${{ secrets.GITHUB_TOKEN }}"
           firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
           projectId: "${{ secrets.FIREBASE_PROJECT_ID }}"
-          channelId: pr-${{ github.event.pull_request.number }}-node${{ matrix.node-version }}
+          channelId: pr-${{ github.event.pull_request.number }}-node20
 
       - name: Comment PR with Preview URL
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: firebase-preview-node${{ matrix.node-version }}
+          header: firebase-preview-node20
           message: |
-            🚀 Firebase Hosting Preview (Node.js ${{ matrix.node-version }}) is ready!
+            🚀 Firebase Hosting Preview (Node.js 20) is ready!
 
             🔗 **Preview URL:** ${{ steps.hosting_deploy.outputs.details_url }}
             
@@ -266,21 +263,18 @@ jobs:
   teardown:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [18, 20]
-    name: Teardown (Node.js ${{ matrix.node-version }})
+    name: Teardown (Node.js 20)
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '20'
+          node-version: 20
           cache: 'npm'
       - run: npm ci
       - run: npm install -g firebase-tools
 
       - name: Delete Hosting Preview Channel
         run: |
-          firebase hosting:channel:delete pr-${{ github.event.pull_request.number }}-node${{ matrix.node-version }} --force --project ${{ secrets.FIREBASE_PROJECT_ID }}
+          firebase hosting:channel:delete pr-${{ github.event.pull_request.number }}-node20 --force --project ${{ secrets.FIREBASE_PROJECT_ID }}
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
