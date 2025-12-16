@@ -22,7 +22,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ msg }) => {
     
     return (
         <div className={`flex items-start gap-3 my-4 ${isUser ? 'flex-row-reverse' : ''}`}>
-             <Avatar className="w-8 h-8">
+             <Avatar>
                 <AvatarFallback className={isUser ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground text-muted'}>
                   <Icon size={18} />
                 </AvatarFallback>
@@ -76,7 +76,7 @@ export const ChatView: React.FC<ChatViewProps> = ({ messages, onSendMessage }) =
                             handleSend();
                           }
                         }}
-                        placeholder="Enter an instruction for the orchestrator... (e.g., 'Create a login page')"
+                        placeholder="Type 'start the build' to begin the upgrade..."
                         className="w-full bg-muted text-foreground placeholder-muted-foreground rounded-lg py-3 pl-4 pr-12 focus-visible:ring-1 focus-visible:ring-ring resize-none"
                         rows={1}
                     />
