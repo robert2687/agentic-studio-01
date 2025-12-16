@@ -1,4 +1,6 @@
 
+@import "https://sandpack.codesandbox.io/style.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -11,42 +13,45 @@
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262.1 83.3% 57.8%; /* Indigo */
+    --primary: 243.8 80% 59.4%; /* Indigo */
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 173.5 90.2% 41.2%; /* Teal */
+    --accent: 173.5 80.2% 38.2%; /* Teal */
     --accent-foreground: 210 40% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 262.1 83.3% 57.8%;
+    --ring: 243.8 80% 59.4%;
     --radius: 0.5rem;
+    --font-inter: 'Inter', sans-serif;
+    --font-space-grotesk: 'Space Grotesk', sans-serif;
+    --font-source-code-pro: 'Source Code Pro', monospace;
   }
  
   .dark {
-    --background: 222.2 84% 4.9%; /* Dark Gray */
+    --background: 221.4 17.5% 15.1%; /* Dark Gray */
     --foreground: 210 40% 98%;
-    --card: 217.2 32.6% 17.5%;
+    --card: 221.4 17.5% 15.1%;
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 262.1 83.3% 57.8%; /* Indigo */
+    --primary: 243.8 80% 59.4%; /* Indigo */
     --primary-foreground: 210 40% 98%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 25.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 173.5 90.2% 41.2%; /* Teal */
+    --accent: 173.5 80.2% 38.2%; /* Teal */
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
     --border: 217.2 32.6% 22.5%;
     --input: 217.2 32.6% 22.5%;
-    --ring: 262.1 83.3% 57.8%;
+    --ring: 243.8 80% 59.4%;
   }
 }
 
@@ -56,7 +61,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-inter);
   }
 }
 
-    
+.sp-wrapper, .sp-layout, .sp-stack {
+  height: 100% !important;
+}
