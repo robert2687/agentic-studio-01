@@ -10,9 +10,9 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        grotesk: ['Space Grotesk', 'sans-serif'],
-        mono: ['Source Code Pro', 'monospace'],
+        sans: ['var(--font-inter)', 'sans-serif'],
+        grotesk: ['var(--font-space-grotesk)', 'sans-serif'],
+        mono: ['var(--font-source-code-pro)', 'monospace'],
       },
       colors: {
         background: 'hsl(var(--background))',

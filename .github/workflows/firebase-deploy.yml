@@ -1,0 +1,286 @@
+name: Firebase CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened, closed]
+
+jobs:
+  # --- Test job runs first ---
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    name: Test (Node.js ${{ matrix.node-version }})
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm run lint --if-present | tee lint.log
+      - run: npm test --if-present | tee test.log
+
+      - name: Upload test logs
+        if: always()   # ensures logs are uploaded even if tests fail
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-test-node${{ matrix.node-version }}
+          path: |
+            lint.log
+            test.log
+          retention-days: 7
+
+  # --- Build job depends on tests ---
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    name: Build (Node.js ${{ matrix.node-version }})
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Download test logs
+        uses: actions/download-artifact@v4
+        with:
+          name: logs-test-node${{ matrix.node-version }}
+          path: .
+      
+      - run: npm ci
+      - run: npm run build --if-present | tee build.log
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output-node${{ matrix.node-version }}
+          path: |
+            dist/**
+            build/**
+          retention-days: 7
+      
+      - name: Upload build logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-build-node${{ matrix.node-version }}
+          path: build.log
+          retention-days: 7
+
+      - name: Combine logs into all-logs.zip
+        if: always()
+        run: |
+          mkdir -p combined-logs
+          cp -n lint.log combined-logs/ 2>/dev/null || true
+          cp -n test.log combined-logs/ 2>/dev/null || true
+          cp -n build.log combined-logs/ 2>/dev/null || true
+          zip -r all-logs.zip combined-logs
+      - name: Upload combined logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: all-logs-node${{ matrix.node-version }}
+          path: all-logs.zip
+          retention-days: 7
+
+  # --- Merge logs from all Node.js versions ---
+  merge-logs:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Merge all logs into one artifact
+    steps:
+      - name: Merge all-logs.zip artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: all-logs-combined
+          pattern: all-logs-node*
+          retention-days: 7
+
+  # --- Merge build outputs from Node.js 18 + 20 ---
+  merge-builds:
+    needs: build
+    runs-on: ubuntu-latest
+    name: Merge all build outputs into one artifact
+    steps:
+      - name: Merge build-output artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: build-output-combined
+          pattern: build-output-node*
+          retention-days: 7
+
+  # --- Deploy job depends on build ---
+  deploy:
+    if: github.event_name == 'push'
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    name: Deploy (Node.js ${{ matrix.node-version }})
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm install -g firebase-tools
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output-node${{ matrix.node-version }}
+          path: ./dist
+
+      - name: Deploy Firestore rules, indexes, functions, and Hosting live
+        run: |
+          firebase deploy --only firestore:rules,firestore:indexes,functions,hosting:live --project ${{ secrets.FIREBASE_PROJECT_ID }}
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+
+  # --- Preview job also depends on build ---
+  preview:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    name: Preview (Node.js ${{ matrix.node-version }})
+    outputs:
+      preview_url_node_${{ matrix.node-version }}: ${{ steps.hosting_deploy.outputs.details_url }}
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - run: npm ci
+      - run: npm install -g firebase-tools
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-output-node${{ matrix.node-version }}
+          path: ./dist
+
+      - name: Deploy to Hosting Preview Channel
+        id: hosting_deploy
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: "${{ secrets.GITHUB_TOKEN }}"
+          firebaseServiceAccount: "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}"
+          projectId: "${{ secrets.FIREBASE_PROJECT_ID }}"
+          channelId: pr-${{ github.event.pull_request.number }}-node${{ matrix.node-version }}
+
+      - name: Comment PR with Preview URL
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: firebase-preview-node${{ matrix.node-version }}
+          message: |
+            🚀 Firebase Hosting Preview (Node.js ${{ matrix.node-version }}) is ready!
+
+            🔗 **Preview URL:** ${{ steps.hosting_deploy.outputs.details_url }}
+            
+  # --- Lighthouse audit job ---
+  lighthouse:
+    needs: preview
+    if: github.event_name == 'pull_request' && github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    name: Lighthouse Audit (Node.js 20)
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm install -g @lhci/cli
+
+      - name: Wait for preview URL
+        uses: jakejarvis/wait-action@v0.1.0
+        with:
+          url: ${{ needs.preview.outputs.preview_url_node_20 }}
+          timeout: 120
+          interval: 10
+
+      - name: Run Lighthouse CI
+        id: lhci
+        run: |
+          lhci autorun --collect.url=${{ needs.preview.outputs.preview_url_node_20 }} --upload.target=temporary-public-storage || echo "LHCI failed!"
+          
+          # Extract scores from the summary and set as outputs
+          PERF=$(cat .lighthouseci/assertion-results.json | grep '"auditId": "performance"' | grep -o '"actual": [^,]*' | sed 's/"actual": //')
+          ACCESSIBILITY=$(cat .lighthouseci/assertion-results.json | grep '"auditId": "accessibility"' | grep -o '"actual": [^,]*' | sed 's/"actual": //')
+          BEST_PRACTICES=$(cat .lighthouseci/assertion-results.json | grep '"auditId": "best-practices"' | grep -o '"actual": [^,]*' | sed 's/"actual": //')
+          SEO=$(cat .lighthouseci/assertion-results.json | grep '"auditId": "seo"' | grep -o '"actual": [^,]*' | sed 's/"actual": //')
+
+          echo "performance=$PERF" >> $GITHUB_OUTPUT
+          echo "accessibility=$ACCESSIBILITY" >> $GITHUB_OUTPUT
+          echo "best_practices=$BEST_PRACTICES" >> $GITHUB_OUTPUT
+          echo "seo=$SEO" >> $GITHUB_OUTPUT
+
+      - name: Upload Lighthouse reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report-node-20
+          path: ./lhci_reports
+          retention-days: 7
+
+      - name: Comment PR with Lighthouse scores
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: lighthouse-report
+          message: |
+            📊 **Lighthouse Report** for PR #${{ github.event.pull_request.number }} (Node.js 20 Preview)
+
+            | Category | Score |
+            |---|---|
+            | Performance | ${{ steps.lhci.outputs.performance }} |
+            | Accessibility | ${{ steps.lhci.outputs.accessibility }} |
+            | Best Practices | ${{ steps.lhci.outputs.best_practices }} |
+            | SEO | ${{ steps.lhci.outputs.seo }} |
+
+            Full report is available in the workflow artifacts.
+
+  # --- Teardown job (runs once PR closes) ---
+  teardown:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18, 20]
+    name: Teardown (Node.js ${{ matrix.node-version }})
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm install -g firebase-tools
+
+      - name: Delete Hosting Preview Channel
+        run: |
+          firebase hosting:channel:delete pr-${{ github.event.pull_request.number }}-node${{ matrix.node-version }} --force --project ${{ secrets.FIREBASE_PROJECT_ID }}
+        env:
+          FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
