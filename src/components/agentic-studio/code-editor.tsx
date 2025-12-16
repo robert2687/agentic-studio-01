@@ -21,7 +21,7 @@ export const CodeEditorView: React.FC<CodeEditorViewProps> = ({ files, activeFil
             acc[sandpackPath] = fileContent;
         }
         return acc;
-    }, {} as { [key: string]: any });
+    }, {} as Record<string, unknown>);
 
     return (
         <div className="h-full w-full bg-card">

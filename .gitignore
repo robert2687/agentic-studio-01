@@ -38,7 +38,7 @@ yarn-error.log*
 next-env.d.ts
 
 # eslint
-.eslintrc.json
+.eslintcache
 
 .genkit/*
 .env*
