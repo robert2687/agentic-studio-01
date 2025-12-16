@@ -1,39 +1,30 @@
-
 "use client";
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Sandpack } from "@codesandbox/sandpack-react";
+import "@codesandbox/sandpack-react/dist/index.css";
 
-export const LivePreview = () => (
-    <div className="h-full bg-white rounded-lg overflow-hidden border border-border">
-         <div className="w-full h-full">
-            <div className="flex items-center justify-center h-full bg-gray-100 p-4">
-                <Card className="w-full max-w-md p-2 border shadow-lg">
-                    <CardHeader>
-                        <CardTitle className="text-2xl font-bold text-center text-gray-800 font-grotesk">Login</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <form className="space-y-6">
-                        <div className="space-y-1">
-                            <Label htmlFor="email-preview" className="text-sm font-medium text-gray-700">Email</Label>
-                            <Input id="email-preview" type="email" className="text-gray-900 bg-white" placeholder="your@email.com"/>
-                        </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="password-preview" className="text-sm font-medium text-gray-700">Password</Label>
-                            <Input id="password-preview" type="password" className="text-gray-900 bg-white" />
-                        </div>
-                        <Button type="button" className="w-full" onClick={(e) => e.preventDefault()}>
-                            Log In
-                        </Button>
-                      </form>
-                    </CardContent>
-                </Card>
-            </div>
-        </div>
-    </div>
-);
+interface SandpackPreviewProps {
+    code: string;
+}
 
-    
+export const SandpackPreview: React.FC<SandpackPreviewProps> = ({ code }) => {
+    return (
+        <Sandpack
+            template="react"
+            files={{
+                "/App.js": code,
+            }}
+            options={{
+                showLineNumbers: true,
+                showInlineErrors: true,
+                showNavigator: false,
+                showTabs: false,
+                showConsole: false,
+                showConsoleButton: false,
+                editorHeight: '100%',
+            }}
+            theme="dark"
+        />
+    );
+};
