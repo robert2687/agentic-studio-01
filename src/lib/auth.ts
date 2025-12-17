@@ -66,23 +66,29 @@ export async function signOut() {
 }
 
 export function useAuth(callback: (user: User | null) => void) {
-  const [authModule, setAuthModule] = React.useState<{ unsubscribe: () => void } | null>(null);
-  
   React.useEffect(() => {
-    getFirebaseAuth().then(async (auth) => {
+    let isMounted = true;
+    let unsubscribe: (() => void) | null = null;
+
+    (async () => {
+      const auth = await getFirebaseAuth();
+      if (!isMounted) return;
+      
       if (!auth) {
         console.warn("Firebase auth is not initialized. Auth state will not be monitored.");
         return;
       }
       const { onAuthStateChanged } = await import("firebase/auth");
-      const unsubscribe = onAuthStateChanged(auth, callback);
-      setAuthModule({ unsubscribe });
-    });
-  }, [callback]);
+      if (!isMounted) return;
+      
+      unsubscribe = onAuthStateChanged(auth, callback);
+    })();
 
-  return () => {
-    if (authModule?.unsubscribe) {
-      authModule.unsubscribe();
-    }
-  };
+    return () => {
+      isMounted = false;
+      if (unsubscribe) {
+        unsubscribe();
+      }
+    };
+  }, [callback]);
 }
