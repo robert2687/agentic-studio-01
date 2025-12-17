@@ -1,6 +1,6 @@
 
-import { initializeApp, getApps, getApp, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
+import type { FirebaseApp } from "firebase/app";
+import type { Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -23,17 +23,46 @@ const isFirebaseConfigured = Boolean(
 
 let app: FirebaseApp | undefined;
 let auth: Auth | undefined;
+let firebaseInitPromise: Promise<void> | null = null;
 
-// Only initialize Firebase if running in browser AND config is complete
-if (typeof window !== "undefined" && isFirebaseConfigured) {
-  if (getApps().length) {
-    app = getApp();
-  } else {
-    app = initializeApp(firebaseConfig);
+// Lazy initialization function
+async function initializeFirebase() {
+  if (firebaseInitPromise) {
+    return firebaseInitPromise;
   }
-  auth = getAuth(app);
-} else if (typeof window !== "undefined" && !isFirebaseConfigured) {
-  console.warn("Firebase configuration is incomplete. Please set all required environment variables.");
+
+  if (typeof window === "undefined" || !isFirebaseConfigured) {
+    if (typeof window !== "undefined") {
+      console.warn("Firebase configuration is incomplete. Please set all required environment variables.");
+    }
+    return;
+  }
+
+  firebaseInitPromise = (async () => {
+    const { initializeApp, getApps, getApp } = await import("firebase/app");
+    const { getAuth } = await import("firebase/auth");
+
+    if (getApps().length) {
+      app = getApp();
+    } else {
+      app = initializeApp(firebaseConfig);
+    }
+    auth = getAuth(app);
+  })();
+
+  return firebaseInitPromise;
 }
 
+// Getter functions that initialize Firebase on demand
+export async function getFirebaseApp(): Promise<FirebaseApp | undefined> {
+  await initializeFirebase();
+  return app;
+}
+
+export async function getFirebaseAuth(): Promise<Auth | undefined> {
+  await initializeFirebase();
+  return auth;
+}
+
+// For backward compatibility, export app and auth (but they will be undefined until initialized)
 export { app, auth };
