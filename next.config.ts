@@ -17,7 +17,18 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
-  }
+  },
+  // Enable experimental optimizations for better tree-shaking
+  experimental: {
+    optimizePackageImports: [
+      'lucide-react',
+      '@radix-ui/react-icons',
+      '@radix-ui/react-select',
+      '@radix-ui/react-switch',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+    ],
+  },
 };
 
 export default nextConfig;
